@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>아빠표 숫자 쓰기 앱</title>
+    <style>
+        body { text-align: center; font-family: 'Arial', sans-serif; background-color: #f0f9ff; touch-action: none; }
+        h1 { color: #333; margin-top: 20px; }
+        #canvas-container { position: relative; width: 300px; height: 400px; margin: 20px auto; background: white; border: 5px solid #ffcfd2; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        canvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
+        .guide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 300px; color: #eee; user-select: none; z-index: 0; }
+        .controls { margin-top: 20px; }
+        button { padding: 10px 25px; font-size: 18px; cursor: pointer; background: #ff7e67; color: white; border: none; border-radius: 10px; transition: 0.3s; }
+        button:hover { background: #ff5e4d; }
+    </style>
+</head>
+<body>
+
+    <h1>숫자 1을 써보자!</h1>
+    
+    <div id="canvas-container">
+        <div class="guide">1</div>
+        <canvas id="drawCanvas" width="300" height="400"></canvas>
+    </div>
+
+    <div class="controls">
+        <button onclick="clearCanvas()">다시 그리기</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+
+        // 선 스타일 설정
+        ctx.strokeStyle = "#4A90E2"; // 예쁜 파란색
+        ctx.lineWidth = 15;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        function startDrawing(e) {
+            drawing = true;
+            draw(e);
+        }
+
+        function stopDrawing() {
+            drawing = false;
+            ctx.beginPath();
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            
+            // 마우스와 터치 좌표 대응
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        // 이벤트 리스너 (마우스 & 터치)
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
+
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e.touches[0]); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
+        canvas.addEventListener('touchend', stopDrawing);
+
+        // 지우기 기능
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    </script>
+</body>
+</html>

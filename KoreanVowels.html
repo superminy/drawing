@@ -4,25 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>한글 자음 쓰기 놀이</title>
+    <title>한글 모음 쓰기 놀이</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
 
         body {
             font-family: 'Jua', sans-serif;
-            background-color: #e8f5e9;
-            /* Light Green theme */
+            background-color: #fce4ec;
+            /* Pink theme */
             color: #333;
             text-align: center;
             margin: 0;
-            padding: 20px;
             padding: 20px;
             overflow-y: auto;
             touch-action: pan-y;
         }
 
         h1 {
-            color: #2e7d32;
+            color: #c2185b;
             margin-bottom: 20px;
             font-size: 2em;
         }
@@ -32,11 +31,11 @@
             top: 20px;
             left: 20px;
             background: #fff;
-            border: 2px solid #4caf50;
+            border: 2px solid #e91e63;
             border-radius: 20px;
             padding: 10px 15px;
             text-decoration: none;
-            color: #4caf50;
+            color: #e91e63;
             font-weight: bold;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: all 0.2s;
@@ -45,7 +44,7 @@
 
         .home-btn:hover {
             transform: scale(1.05);
-            background: #e8f5e9;
+            background: #f8bbd0;
         }
 
         .selector-container {
@@ -61,13 +60,13 @@
 
         .char-btn {
             background-color: #fff;
-            border: 2px solid #66bb6a;
+            border: 2px solid #f06292;
             border-radius: 10px;
             width: 40px;
             height: 40px;
             font-size: 20px;
             font-family: 'Jua', sans-serif;
-            color: #2e7d32;
+            color: #880e4f;
             cursor: pointer;
             transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -75,13 +74,13 @@
 
         .char-btn:hover {
             transform: scale(1.1);
-            background-color: #c8e6c9;
+            background-color: #f48fb1;
         }
 
         .char-btn.active {
-            background-color: #4caf50;
+            background-color: #e91e63;
             color: white;
-            border-color: #2e7d32;
+            border-color: #880e4f;
             transform: scale(1.15);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
@@ -94,7 +93,7 @@
             background: white;
             border-radius: 30px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            border: 8px solid #a5d6a7;
+            border: 8px solid #f8bbd0;
             overflow: hidden;
             transform: scale(0.9);
             transform-origin: center top;
@@ -142,7 +141,7 @@
         }
 
         .btn-action {
-            background-color: #ff7043;
+            background-color: #ec407a;
             color: white;
             border: none;
             padding: 10px 30px;
@@ -178,9 +177,8 @@
 
         .success-text {
             font-size: 4em;
-            color: #ffca28;
-            /* Amber */
-            text-shadow: 2px 2px 0px #fff, 4px 4px 0px #ff6f00;
+            color: #fbc02d;
+            text-shadow: 2px 2px 0px #fff, 4px 4px 0px #f57f17;
             animation: bounce 1s infinite alternate;
         }
 
@@ -197,16 +195,15 @@
         /* Arrow Styles */
         .guide-arrow {
             fill: none;
-            stroke: rgba(255, 112, 67, 0.6);
+            stroke: rgba(233, 30, 99, 0.6);
             stroke-width: 5;
             stroke-dasharray: 10 5;
             marker-end: url(#arrowhead);
             animation: dash 1s linear infinite;
         }
 
-        /* Highlight current Arrow */
         .guide-arrow.active {
-            stroke: rgba(255, 87, 34, 1);
+            stroke: rgba(233, 30, 99, 1);
             stroke-width: 7;
         }
 
@@ -220,7 +217,7 @@
             position: absolute;
             width: 24px;
             height: 24px;
-            background: rgba(255, 87, 34, 0.9);
+            background: rgba(233, 30, 99, 0.9);
             color: white;
             border-radius: 50%;
             display: flex;
@@ -230,11 +227,9 @@
             font-weight: bold;
             z-index: 4;
             transform: translate(-50%, -50%);
-            /* Center over coordinate */
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
             pointer-events: none;
             opacity: 0;
-            /* Hidden by default */
             transition: opacity 0.3s;
         }
 
@@ -247,20 +242,18 @@
 <body>
 
     <a href="index.html" class="home-btn">🏠 홈으로</a>
-    <h1>한글 자음 쓰기</h1>
+    <h1>한글 모음 쓰기</h1>
 
     <div class="selector-container" id="selector"></div>
 
     <div id="canvas-container">
-        <div id="guide-layer">ㄱ</div>
-        <!-- SVG for Arrows -->
+        <div id="guide-layer">ㅏ</div>
         <svg id="arrow-layer" width="300" height="400">
             <defs>
                 <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="rgba(255, 112, 67, 0.6)" />
+                    <polygon points="0 0, 10 3.5, 0 7" fill="rgba(233, 30, 99, 0.6)" />
                 </marker>
             </defs>
-            <!-- Paths will be injected JS -->
         </svg>
         <canvas id="drawCanvas" width="300" height="400"></canvas>
     </div>
@@ -271,7 +264,7 @@
 
     <div id="success-overlay">
         <div class="success-text">참 잘했어요!</div>
-        <button class="btn-action" style="background:#4caf50; margin-top:20px;" onclick="nextChar()">다음 글자!</button>
+        <button class="btn-action" style="background:#8bc34a; margin-top:20px;" onclick="nextChar()">다음 글자!</button>
     </div>
 
     <script>
@@ -285,282 +278,89 @@
         const width = 300;
         const height = 400;
 
-        // --- Data Structure Refactor: Array of Strokes ---
-        // Each consonant has an array of 'strokes'.
-        // Each 'stroke' has: { path: "...", num: {x, y, text}, checkpoints: [{x,y}, ...] }
-        // Coordinates kept from "Internal Box" refinement.
-
-        const consonants = [
+        // Vowels Data
+        const vowels = [
             {
-                char: 'ㄱ',
+                char: 'ㅏ',
                 strokes: [
-                    {
-                        // Single stroke
-                        path: "M 80 110 L 220 110 L 220 270",
-                        num: { x: 80, y: 110, text: "1" },
-                        checkpoints: [{ x: 80, y: 110 }, { x: 220, y: 110 }, { x: 220, y: 270 }]
-                    }
+                    { path: "M 150 90 L 150 290", num: { x: 150, y: 90, text: "1" }, checkpoints: [{ x: 150, y: 90 }, { x: 150, y: 290 }] },
+                    { path: "M 150 190 L 230 190", num: { x: 160, y: 190, text: "2" }, checkpoints: [{ x: 150, y: 190 }, { x: 230, y: 190 }] }
                 ]
             },
             {
-                char: 'ㄴ',
+                char: 'ㅑ',
                 strokes: [
-                    {
-                        path: "M 80 110 L 80 270 L 220 270",
-                        num: { x: 80, y: 110, text: "1" },
-                        checkpoints: [{ x: 80, y: 110 }, { x: 80, y: 270 }, { x: 220, y: 270 }]
-                    }
+                    { path: "M 130 90 L 130 290", num: { x: 130, y: 90, text: "1" }, checkpoints: [{ x: 130, y: 90 }, { x: 130, y: 290 }] },
+                    { path: "M 130 160 L 210 160", num: { x: 140, y: 160, text: "2" }, checkpoints: [{ x: 130, y: 160 }, { x: 210, y: 160 }] },
+                    { path: "M 130 220 L 210 220", num: { x: 140, y: 220, text: "3" }, checkpoints: [{ x: 130, y: 220 }, { x: 210, y: 220 }] }
                 ]
             },
             {
-                char: 'ㄷ',
+                char: 'ㅓ',
                 strokes: [
-                    {
-                        // Stroke 1: Top horizontal
-                        path: "M 85 115 L 215 115",
-                        num: { x: 85, y: 115, text: "1" },
-                        checkpoints: [{ x: 85, y: 115 }, { x: 215, y: 115 }]
-                    },
-                    {
-                        // Stroke 2: C-shape
-                        path: "M 85 155 L 85 270 L 215 270",
-                        num: { x: 85, y: 155, text: "2" },
-                        checkpoints: [{ x: 85, y: 155 }, { x: 85, y: 270 }, { x: 215, y: 270 }]
-                    }
+                    { path: "M 80 190 L 160 190", num: { x: 80, y: 190, text: "1" }, checkpoints: [{ x: 80, y: 190 }, { x: 160, y: 190 }] },
+                    { path: "M 160 90 L 160 290", num: { x: 160, y: 90, text: "2" }, checkpoints: [{ x: 160, y: 90 }, { x: 160, y: 290 }] }
                 ]
             },
             {
-                char: 'ㄹ',
+                char: 'ㅕ',
                 strokes: [
-                    {
-                        // S1: Top zigzag
-                        path: "M 85 110 L 215 110 L 215 180",
-                        num: { x: 85, y: 110, text: "1" },
-                        checkpoints: [{ x: 85, y: 110 }, { x: 215, y: 110 }, { x: 215, y: 180 }]
-                    },
-                    {
-                        // S2: Middle horiz
-                        path: "M 85 180 L 215 180",
-                        num: { x: 85, y: 180, text: "2" },
-                        checkpoints: [{ x: 85, y: 180 }, { x: 215, y: 180 }]
-                    },
-                    {
-                        // S3: Bottom L
-                        path: "M 85 180 L 85 270 L 215 270",
-                        num: { x: 85, y: 210, text: "3" },
-                        checkpoints: [{ x: 85, y: 270 }, { x: 215, y: 270 }] // Simplified checkpoints allowing start fromprev
-                    }
+                    { path: "M 90 160 L 170 160", num: { x: 90, y: 160, text: "1" }, checkpoints: [{ x: 90, y: 160 }, { x: 170, y: 160 }] },
+                    { path: "M 90 220 L 170 220", num: { x: 90, y: 220, text: "2" }, checkpoints: [{ x: 90, y: 220 }, { x: 170, y: 220 }] },
+                    { path: "M 170 90 L 170 290", num: { x: 170, y: 90, text: "3" }, checkpoints: [{ x: 170, y: 90 }, { x: 170, y: 290 }] }
                 ]
             },
             {
-                char: 'ㅁ',
+                char: 'ㅗ',
                 strokes: [
-                    {
-                        // S1: Left vertical
-                        path: "M 85 120 L 85 270",
-                        num: { x: 85, y: 120, text: "1" },
-                        checkpoints: [{ x: 85, y: 120 }, { x: 85, y: 270 }]
-                    },
-                    {
-                        // S2: Top-Right
-                        path: "M 85 120 L 215 120 L 215 270",
-                        num: { x: 105, y: 120, text: "2" },
-                        checkpoints: [{ x: 215, y: 120 }, { x: 215, y: 270 }] // Assume start is near S1
-                    },
-                    {
-                        // S3: Bottom
-                        path: "M 85 270 L 215 270",
-                        num: { x: 85, y: 270, text: "3" },
-                        checkpoints: [{ x: 85, y: 270 }, { x: 215, y: 270 }]
-                    }
+                    { path: "M 150 80 L 150 180", num: { x: 150, y: 80, text: "1" }, checkpoints: [{ x: 150, y: 80 }, { x: 150, y: 180 }] },
+                    { path: "M 70 180 L 230 180", num: { x: 70, y: 180, text: "2" }, checkpoints: [{ x: 70, y: 180 }, { x: 230, y: 180 }] }
                 ]
             },
             {
-                char: 'ㅂ',
+                char: 'ㅛ',
                 strokes: [
-                    {
-                        path: "M 85 110 L 85 270",
-                        num: { x: 85, y: 110, text: "1" },
-                        checkpoints: [{ x: 85, y: 110 }, { x: 85, y: 270 }]
-                    },
-                    {
-                        path: "M 215 110 L 215 270",
-                        num: { x: 215, y: 110, text: "2" },
-                        checkpoints: [{ x: 215, y: 110 }, { x: 215, y: 270 }]
-                    },
-                    {
-                        path: "M 85 190 L 215 190",
-                        num: { x: 150, y: 190, text: "3" },
-                        checkpoints: [{ x: 85, y: 190 }, { x: 215, y: 190 }]
-                    },
-                    {
-                        path: "M 85 270 L 215 270",
-                        num: { x: 150, y: 270, text: "4" },
-                        checkpoints: [{ x: 85, y: 270 }, { x: 215, y: 270 }]
-                    }
+                    { path: "M 110 80 L 110 180", num: { x: 110, y: 80, text: "1" }, checkpoints: [{ x: 110, y: 80 }, { x: 110, y: 180 }] },
+                    { path: "M 190 80 L 190 180", num: { x: 190, y: 80, text: "2" }, checkpoints: [{ x: 190, y: 80 }, { x: 190, y: 180 }] },
+                    { path: "M 70 180 L 230 180", num: { x: 70, y: 180, text: "3" }, checkpoints: [{ x: 70, y: 180 }, { x: 230, y: 180 }] }
                 ]
             },
             {
-                char: 'ㅅ',
+                char: 'ㅜ',
                 strokes: [
-                    {
-                        path: "M 150 90 L 75 280",
-                        num: { x: 150, y: 90, text: "1" },
-                        checkpoints: [{ x: 150, y: 90 }, { x: 75, y: 280 }]
-                    },
-                    {
-                        path: "M 150 140 L 225 280",
-                        num: { x: 180, y: 160, text: "2" },
-                        checkpoints: [{ x: 150, y: 140 }, { x: 225, y: 280 }]
-                    }
+                    { path: "M 70 180 L 230 180", num: { x: 70, y: 180, text: "1" }, checkpoints: [{ x: 70, y: 180 }, { x: 230, y: 180 }] },
+                    { path: "M 150 180 L 150 300", num: { x: 150, y: 190, text: "2" }, checkpoints: [{ x: 150, y: 180 }, { x: 150, y: 300 }] }
                 ]
             },
             {
-                char: 'ㅇ',
+                char: 'ㅠ',
                 strokes: [
-                    {
-                        path: "M 150 90 C 50 90 50 300 150 300 C 250 300 250 90 150 90",
-                        num: { x: 150, y: 90, text: "1" },
-                        checkpoints: [{ x: 150, y: 90 }, { x: 70, y: 195 }, { x: 150, y: 300 }, { x: 230, y: 195 }]
-                    }
+                    { path: "M 70 180 L 230 180", num: { x: 70, y: 180, text: "1" }, checkpoints: [{ x: 70, y: 180 }, { x: 230, y: 180 }] },
+                    { path: "M 110 180 L 110 300", num: { x: 110, y: 190, text: "2" }, checkpoints: [{ x: 110, y: 180 }, { x: 110, y: 300 }] },
+                    { path: "M 190 180 L 190 300", num: { x: 190, y: 190, text: "3" }, checkpoints: [{ x: 190, y: 180 }, { x: 190, y: 300 }] }
                 ]
             },
             {
-                char: 'ㅈ',
+                char: 'ㅡ',
                 strokes: [
-                    {
-                        path: "M 75 90 L 225 90",
-                        num: { x: 75, y: 90, text: "1" },
-                        checkpoints: [{ x: 75, y: 90 }, { x: 225, y: 90 }]
-                    },
-                    {
-                        path: "M 150 90 L 75 280",
-                        num: { x: 150, y: 90, text: "2" },
-                        checkpoints: [{ x: 150, y: 90 }, { x: 75, y: 280 }]
-                    },
-                    {
-                        path: "M 150 190 L 225 280",
-                        num: { x: 150, y: 190, text: "3" },
-                        checkpoints: [{ x: 150, y: 190 }, { x: 225, y: 280 }]
-                    }
+                    { path: "M 60 190 L 240 190", num: { x: 60, y: 190, text: "1" }, checkpoints: [{ x: 60, y: 190 }, { x: 240, y: 190 }] }
                 ]
             },
             {
-                char: 'ㅊ',
+                char: 'ㅣ',
                 strokes: [
-                    {
-                        path: "M 85 65 L 215 65",
-                        num: { x: 85, y: 65, text: "1" },
-                        checkpoints: [{ x: 85, y: 65 }, { x: 215, y: 65 }]
-                    },
-                    {
-                        path: "M 75 100 L 225 100",
-                        num: { x: 75, y: 100, text: "2" },
-                        checkpoints: [{ x: 75, y: 100 }, { x: 225, y: 100 }]
-                    },
-                    {
-                        path: "M 150 100 L 75 280",
-                        num: { x: 150, y: 100, text: "3" },
-                        checkpoints: [{ x: 150, y: 100 }, { x: 75, y: 280 }]
-                    },
-                    {
-                        path: "M 150 190 L 225 280",
-                        num: { x: 150, y: 190, text: "4" },
-                        checkpoints: [{ x: 150, y: 190 }, { x: 225, y: 280 }]
-                    }
-                ]
-            },
-            {
-                char: 'ㅋ',
-                strokes: [
-                    {
-                        path: "M 80 110 L 220 110 L 220 270",
-                        num: { x: 80, y: 110, text: "1" },
-                        checkpoints: [{ x: 80, y: 110 }, { x: 220, y: 110 }, { x: 220, y: 270 }]
-                    },
-                    {
-                        path: "M 80 190 L 220 190",
-                        num: { x: 80, y: 190, text: "2" },
-                        checkpoints: [{ x: 80, y: 190 }, { x: 220, y: 190 }]
-                    }
-                ]
-            },
-            {
-                char: 'ㅌ',
-                strokes: [
-                    {
-                        path: "M 80 110 L 220 110",
-                        num: { x: 80, y: 110, text: "1" },
-                        checkpoints: [{ x: 80, y: 110 }, { x: 220, y: 110 }]
-                    },
-                    {
-                        path: "M 80 190 L 220 190",
-                        num: { x: 80, y: 190, text: "2" },
-                        checkpoints: [{ x: 80, y: 190 }, { x: 220, y: 190 }]
-                    },
-                    {
-                        path: "M 80 110 L 80 270 L 220 270",
-                        num: { x: 80, y: 230, text: "3" },
-                        checkpoints: [{ x: 80, y: 270 }, { x: 220, y: 270 }] // Simplified
-                    }
-                ]
-            },
-            {
-                char: 'ㅍ',
-                strokes: [
-                    {
-                        path: "M 75 110 L 225 110",
-                        num: { x: 75, y: 110, text: "1" },
-                        checkpoints: [{ x: 75, y: 110 }, { x: 225, y: 110 }]
-                    },
-                    {
-                        path: "M 105 110 L 105 270",
-                        num: { x: 105, y: 110, text: "2" },
-                        checkpoints: [{ x: 105, y: 110 }, { x: 105, y: 270 }]
-                    },
-                    {
-                        path: "M 195 110 L 195 270",
-                        num: { x: 195, y: 110, text: "3" },
-                        checkpoints: [{ x: 195, y: 110 }, { x: 195, y: 270 }]
-                    },
-                    {
-                        path: "M 75 270 L 225 270",
-                        num: { x: 75, y: 270, text: "4" },
-                        checkpoints: [{ x: 75, y: 270 }, { x: 225, y: 270 }]
-                    }
-                ]
-            },
-            {
-                char: 'ㅎ',
-                strokes: [
-                    {
-                        path: "M 120 70 L 180 70",
-                        num: { x: 100, y: 70, text: "1" },
-                        checkpoints: [{ x: 150, y: 70 }]
-                    },
-                    {
-                        path: "M 75 110 L 225 110",
-                        num: { x: 65, y: 110, text: "2" },
-                        checkpoints: [{ x: 75, y: 110 }, { x: 225, y: 110 }]
-                    },
-                    {
-                        path: "M 150 160 C 40 160 40 310 150 310 C 260 310 260 160 150 160",
-                        num: { x: 150, y: 160, text: "3" },
-                        checkpoints: [{ x: 150, y: 160 }, { x: 70, y: 240 }, { x: 150, y: 310 }, { x: 230, y: 240 }]
-                    }
+                    { path: "M 150 80 L 150 300", num: { x: 150, y: 80, text: "1" }, checkpoints: [{ x: 150, y: 80 }, { x: 150, y: 300 }] }
                 ]
             }
         ];
 
         let currentIndex = 0;
         let isDrawing = false;
-
-        // --- Sequential Stroke Logic ---
-        let currentStrokeIndex = 0; // Which stroke are we on? (0, 1, 2...)
-        let strokePassedCheckpoints = []; // Checkpoints passed for the *current* stroke
+        let currentStrokeIndex = 0;
+        let strokePassedCheckpoints = [];
 
         // Init Selector
-        const charList = ['ㄱ', 'ㄴ', 'ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+        const charList = vowels.map(v => v.char);
         charList.forEach((c, idx) => {
             const btn = document.createElement('button');
             btn.className = 'char-btn';
@@ -574,41 +374,34 @@
             const char = charList[index];
             guideEl.innerText = char;
 
-            // Highlight button
             document.querySelectorAll('.char-btn').forEach((b, i) => {
                 b.classList.toggle('active', i === index);
             });
 
-            // Start Stroke 0
             currentStrokeIndex = 0;
             resetCanvas();
             updateGuides();
         }
 
-        // Render *only* the current stroke's guide
         function updateGuides() {
-            // Clear all guides
             arrowLayer.innerHTML = `<defs>
                 <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="rgba(255, 112, 67, 0.6)" />
+                    <polygon points="0 0, 10 3.5, 0 7" fill="rgba(233, 30, 99, 0.6)" />
                 </marker>
             </defs>`;
-            // Remove floating numbers
             const existingNums = arrowLayer.parentNode.querySelectorAll('.stroke-number');
             existingNums.forEach(e => e.remove());
 
-            const data = consonants[currentIndex];
+            const data = vowels[currentIndex];
             if (!data || currentStrokeIndex >= data.strokes.length) return;
 
             const stroke = data.strokes[currentStrokeIndex];
 
-            // Draw Arrow
             const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
             pathEl.setAttribute("d", stroke.path);
             pathEl.setAttribute("class", "guide-arrow active");
             arrowLayer.appendChild(pathEl);
 
-            // Draw Number
             const numEl = document.createElement('div');
             numEl.className = 'stroke-number active';
             numEl.innerText = stroke.num.text;
@@ -616,13 +409,11 @@
             numEl.style.top = stroke.num.y + 'px';
             arrowLayer.parentNode.appendChild(numEl);
 
-            // Init Validation for this stroke
             strokePassedCheckpoints = new Array(stroke.checkpoints.length).fill(false);
         }
 
-        // --- Drawing Logic ---
-        ctx.strokeStyle = '#2e7d32'; // Dark Green
-        ctx.lineWidth = 50; // Thicker for better coverage
+        ctx.strokeStyle = '#c2185b'; // Deep Pink
+        ctx.lineWidth = 50;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
@@ -641,7 +432,7 @@
             const pos = getPos(e);
             ctx.beginPath();
             ctx.moveTo(pos.x, pos.y);
-            validateCheckpoint(pos.x, pos.y); // Check start
+            validateCheckpoint(pos.x, pos.y);
             e.preventDefault();
         }
 
@@ -655,10 +446,7 @@
         }
 
         function endDraw() {
-            if (!isDrawing) return;
             isDrawing = false;
-            // No strict "fail" on lift, just wait for resumption
-            // Check if stroke was completed in moveDraw
         }
 
         canvas.addEventListener('mousedown', startDraw);
@@ -671,59 +459,44 @@
         function resetCanvas() {
             ctx.clearRect(0, 0, width, height);
             closeSuccess();
-            // Reset stroke logic
             currentStrokeIndex = 0;
             updateGuides();
         }
 
         function validateCheckpoint(x, y) {
-            const data = consonants[currentIndex];
+            const data = vowels[currentIndex];
             if (!data || currentStrokeIndex >= data.strokes.length) return;
 
             const stroke = data.strokes[currentStrokeIndex];
             const checkpoints = stroke.checkpoints;
 
-            // Simple Flexible Val: Use standard radius
-            // Find next unpassed
             const nextIndex = strokePassedCheckpoints.indexOf(false);
-            if (nextIndex === -1) return; // All passed for this stroke
+            if (nextIndex === -1) return;
 
             const target = checkpoints[nextIndex];
             const dist = Math.sqrt(Math.pow(x - target.x, 2) + Math.pow(y - target.y, 2));
 
-            // Increased radius (65) for flexibility
             if (dist < 65) {
                 strokePassedCheckpoints[nextIndex] = true;
-
-                // If Stroke Complete?
                 if (strokePassedCheckpoints.every(p => p === true)) {
-                    // Stroke Done!
                     completeStroke();
                 }
             }
         }
 
         function completeStroke() {
-            console.log(`Stroke ${currentStrokeIndex + 1} Done`);
-
-            // Add a small delay so user sees "done" status or just feels the beat
             setTimeout(() => {
-                // Advance
                 currentStrokeIndex++;
-
-                const data = consonants[currentIndex];
+                const data = vowels[currentIndex];
                 if (currentStrokeIndex >= data.strokes.length) {
-                    // All strokes done -> Check Pixel Coverage
                     finallizeCharacter();
                 } else {
-                    // Show next guide
                     updateGuides();
                 }
-            }, 500); // 500ms delay
+            }, 500);
         }
 
         function finallizeCharacter() {
-            // 2. Pixel Coverage Check (Validation Buffer)
             const targetCanvas = document.createElement('canvas');
             targetCanvas.width = width;
             targetCanvas.height = height;
@@ -749,22 +522,14 @@
             }
 
             const coverage = coveredPixels / targetPixels;
-            console.log(`Coverage: ${(coverage * 100).toFixed(1)}%`);
-
-            // Flexible threshold
             if (coverage > 0.3) {
                 showSuccess();
-            } else {
-                console.log("Coverage too low, try again");
-                // Maybe auto-clear or let user clear?
-                // Let's let user modify or clear manually
             }
         }
 
         let autoAdvanceTimer = null;
         function showSuccess() {
             successOverlay.classList.add('show');
-            // Remove guides
             arrowLayer.innerHTML = "";
             const existingNums = arrowLayer.parentNode.querySelectorAll('.stroke-number');
             existingNums.forEach(e => e.remove());
@@ -789,8 +554,7 @@
             successOverlay.classList.remove('show');
         }
 
-        // Init
-        setChar(0); // Start with ㄱ
+        setChar(0);
 
     </script>
 </body>

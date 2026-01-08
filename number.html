@@ -15,9 +15,10 @@
             text-align: center;
             margin: 0;
             padding: 20px;
-            overflow: hidden;
+            padding: 20px;
+            overflow-y: auto;
             /* Prevent scrolling while drawing */
-            touch-action: none;
+            touch-action: pan-y;
         }
 
         h1 {
@@ -70,10 +71,10 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
             border: 8px solid #b2ebf2;
             overflow: hidden;
-            transform: scale(1.3);
+            transform: scale(0.9);
             transform-origin: center top;
             margin-top: 40px;
-            margin-bottom: 60px;
+            margin-bottom: 50px;
         }
 
         /* Guide layer (background number) */

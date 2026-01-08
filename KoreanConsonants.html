@@ -95,6 +95,10 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
             border: 8px solid #a5d6a7;
             overflow: hidden;
+            transform: scale(1.3);
+            transform-origin: center top;
+            margin-top: 40px;
+            margin-bottom: 60px;
         }
 
         #guide-layer {
@@ -199,6 +203,12 @@
             animation: dash 1s linear infinite;
         }
 
+        /* Highlight current Arrow */
+        .guide-arrow.active {
+            stroke: rgba(255, 87, 34, 1);
+            stroke-width: 7;
+        }
+
         @keyframes dash {
             to {
                 stroke-dashoffset: -15;
@@ -222,6 +232,13 @@
             /* Center over coordinate */
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
             pointer-events: none;
+            opacity: 0;
+            /* Hidden by default */
+            transition: opacity 0.3s;
+        }
+
+        .stroke-number.active {
+            opacity: 1;
         }
     </style>
 </head>
@@ -267,240 +284,279 @@
         const width = 300;
         const height = 400;
 
-        // Data: Consonants with Checkpoints and Arrow Paths
-        // Checkpoints: Array of {x, y}. User must pass near these in order.
-        // Paths: SVG path d strings for arrows.
+        // --- Data Structure Refactor: Array of Strokes ---
+        // Each consonant has an array of 'strokes'.
+        // Each 'stroke' has: { path: "...", num: {x, y, text}, checkpoints: [{x,y}, ...] }
+        // Coordinates kept from "Internal Box" refinement.
+
         const consonants = [
             {
                 char: 'ㄱ',
-                // Tighter coords for Jua
-                checkpoints: [{ x: 80, y: 110 }, { x: 220, y: 110 }, { x: 220, y: 290 }],
-                arrowPaths: ["M 80 110 L 220 110 L 220 290"],
-                strokeNums: [{ x: 80, y: 110, text: "1" }]
+                strokes: [
+                    {
+                        // Single stroke
+                        path: "M 80 110 L 220 110 L 220 270",
+                        num: { x: 80, y: 110, text: "1" },
+                        checkpoints: [{ x: 80, y: 110 }, { x: 220, y: 110 }, { x: 220, y: 270 }]
+                    }
+                ]
             },
             {
                 char: 'ㄴ',
-                checkpoints: [{ x: 80, y: 110 }, { x: 80, y: 290 }, { x: 220, y: 290 }],
-                arrowPaths: ["M 80 110 L 80 290 L 220 290"],
-                strokeNums: [{ x: 80, y: 110, text: "1" }]
+                strokes: [
+                    {
+                        path: "M 80 110 L 80 270 L 220 270",
+                        num: { x: 80, y: 110, text: "1" },
+                        checkpoints: [{ x: 80, y: 110 }, { x: 80, y: 270 }, { x: 220, y: 270 }]
+                    }
+                ]
             },
             {
                 char: 'ㄷ',
-                checkpoints: [
-                    { x: 80, y: 110 }, { x: 220, y: 110 },
-                    { x: 80, y: 150 }, { x: 80, y: 290 }, { x: 220, y: 290 }
-                ],
-                arrowPaths: [
-                    "M 85 110 L 215 110", // Top, shortened slightly to avoid edge
-                    "M 85 150 L 85 290 L 215 290"
-                ],
-                strokeNums: [
-                    { x: 85, y: 110, text: "1" },
-                    { x: 85, y: 150, text: "2" }
+                strokes: [
+                    {
+                        // Stroke 1: Top horizontal
+                        path: "M 85 115 L 215 115",
+                        num: { x: 85, y: 115, text: "1" },
+                        checkpoints: [{ x: 85, y: 115 }, { x: 215, y: 115 }]
+                    },
+                    {
+                        // Stroke 2: C-shape
+                        path: "M 85 155 L 85 270 L 215 270",
+                        num: { x: 85, y: 155, text: "2" },
+                        checkpoints: [{ x: 85, y: 155 }, { x: 85, y: 270 }, { x: 215, y: 270 }]
+                    }
                 ]
             },
             {
                 char: 'ㄹ',
-                checkpoints: [
-                    { x: 80, y: 110 }, { x: 220, y: 110 }, { x: 220, y: 180 },
-                    { x: 80, y: 180 }, { x: 80, y: 290 }, { x: 220, y: 290 }
-                ],
-                arrowPaths: [
-                    "M 80 110 L 220 110 L 220 180",
-                    "M 80 180 L 220 180",
-                    "M 80 180 L 80 290 L 220 290"
-                ],
-                strokeNums: [
-                    { x: 80, y: 110, text: "1" },
-                    { x: 80, y: 180, text: "2" },
-                    { x: 80, y: 220, text: "3" } // Offset slightly down on vertical
+                strokes: [
+                    {
+                        // S1: Top zigzag
+                        path: "M 85 110 L 215 110 L 215 180",
+                        num: { x: 85, y: 110, text: "1" },
+                        checkpoints: [{ x: 85, y: 110 }, { x: 215, y: 110 }, { x: 215, y: 180 }]
+                    },
+                    {
+                        // S2: Middle horiz
+                        path: "M 85 180 L 215 180",
+                        num: { x: 85, y: 180, text: "2" },
+                        checkpoints: [{ x: 85, y: 180 }, { x: 215, y: 180 }]
+                    },
+                    {
+                        // S3: Bottom L
+                        path: "M 85 180 L 85 270 L 215 270",
+                        num: { x: 85, y: 210, text: "3" },
+                        checkpoints: [{ x: 85, y: 270 }, { x: 215, y: 270 }] // Simplified checkpoints allowing start fromprev
+                    }
                 ]
             },
             {
                 char: 'ㅁ',
-                // Jua ㅁ box is roughly 80,120 to 220,280
-                checkpoints: [
-                    { x: 85, y: 120 }, { x: 85, y: 280 },
-                    { x: 85, y: 120 }, { x: 215, y: 120 }, { x: 215, y: 280 },
-                    { x: 85, y: 280 }, { x: 215, y: 280 }
-                ],
-                arrowPaths: [
-                    "M 85 120 L 85 280",
-                    "M 85 120 L 215 120 L 215 280",
-                    "M 85 280 L 215 280"
-                ],
-                strokeNums: [
-                    { x: 85, y: 120, text: "1" },
-                    { x: 105, y: 120, text: "2" }, // visual offset
-                    { x: 85, y: 280, text: "3" }
+                strokes: [
+                    {
+                        // S1: Left vertical
+                        path: "M 85 120 L 85 270",
+                        num: { x: 85, y: 120, text: "1" },
+                        checkpoints: [{ x: 85, y: 120 }, { x: 85, y: 270 }]
+                    },
+                    {
+                        // S2: Top-Right
+                        path: "M 85 120 L 215 120 L 215 270",
+                        num: { x: 105, y: 120, text: "2" },
+                        checkpoints: [{ x: 215, y: 120 }, { x: 215, y: 270 }] // Assume start is near S1
+                    },
+                    {
+                        // S3: Bottom
+                        path: "M 85 270 L 215 270",
+                        num: { x: 85, y: 270, text: "3" },
+                        checkpoints: [{ x: 85, y: 270 }, { x: 215, y: 270 }]
+                    }
                 ]
             },
             {
                 char: 'ㅂ',
-                checkpoints: [
-                    { x: 80, y: 110 }, { x: 80, y: 290 },
-                    { x: 220, y: 110 }, { x: 220, y: 290 },
-                    { x: 80, y: 200 }, { x: 220, y: 200 },
-                    { x: 80, y: 290 }, { x: 220, y: 290 }
-                ],
-                arrowPaths: [
-                    "M 85 110 L 85 290",
-                    "M 215 110 L 215 290",
-                    "M 85 200 L 215 200",
-                    "M 85 290 L 215 290"
-                ],
-                strokeNums: [
-                    { x: 85, y: 110, text: "1" },
-                    { x: 215, y: 110, text: "2" },
-                    { x: 150, y: 200, text: "3" }, // Center
-                    { x: 150, y: 290, text: "4" }  // Center
+                strokes: [
+                    {
+                        path: "M 85 110 L 85 270",
+                        num: { x: 85, y: 110, text: "1" },
+                        checkpoints: [{ x: 85, y: 110 }, { x: 85, y: 270 }]
+                    },
+                    {
+                        path: "M 215 110 L 215 270",
+                        num: { x: 215, y: 110, text: "2" },
+                        checkpoints: [{ x: 215, y: 110 }, { x: 215, y: 270 }]
+                    },
+                    {
+                        path: "M 85 190 L 215 190",
+                        num: { x: 150, y: 190, text: "3" },
+                        checkpoints: [{ x: 85, y: 190 }, { x: 215, y: 190 }]
+                    },
+                    {
+                        path: "M 85 270 L 215 270",
+                        num: { x: 150, y: 270, text: "4" },
+                        checkpoints: [{ x: 85, y: 270 }, { x: 215, y: 270 }]
+                    }
                 ]
             },
             {
                 char: 'ㅅ',
-                checkpoints: [
-                    { x: 150, y: 90 }, { x: 70, y: 290 },
-                    { x: 150, y: 140 }, { x: 230, y: 290 }
-                ],
-                arrowPaths: [
-                    "M 150 90 L 70 290",
-                    "M 150 140 L 230 290"
-                ],
-                strokeNums: [
-                    { x: 150, y: 90, text: "1" },
-                    { x: 180, y: 160, text: "2" }
+                strokes: [
+                    {
+                        path: "M 150 90 L 75 280",
+                        num: { x: 150, y: 90, text: "1" },
+                        checkpoints: [{ x: 150, y: 90 }, { x: 75, y: 280 }]
+                    },
+                    {
+                        path: "M 150 140 L 225 280",
+                        num: { x: 180, y: 160, text: "2" },
+                        checkpoints: [{ x: 150, y: 140 }, { x: 225, y: 280 }]
+                    }
                 ]
             },
             {
                 char: 'ㅇ',
-                checkpoints: [
-                    { x: 150, y: 90 }, { x: 70, y: 200 }, { x: 150, y: 310 }, { x: 230, y: 200 }
-                ],
-                arrowPaths: [
-                    "M 150 90 C 50 90 50 310 150 310 C 250 310 250 90 150 90"
-                ],
-                strokeNums: [{ x: 150, y: 90, text: "1" }]
+                strokes: [
+                    {
+                        path: "M 150 90 C 50 90 50 300 150 300 C 250 300 250 90 150 90",
+                        num: { x: 150, y: 90, text: "1" },
+                        checkpoints: [{ x: 150, y: 90 }, { x: 70, y: 195 }, { x: 150, y: 300 }, { x: 230, y: 195 }]
+                    }
+                ]
             },
             {
                 char: 'ㅈ',
-                checkpoints: [
-                    { x: 70, y: 90 }, { x: 230, y: 90 },
-                    { x: 150, y: 90 }, { x: 70, y: 290 },
-                    { x: 150, y: 190 }, { x: 230, y: 290 }
-                ],
-                arrowPaths: [
-                    "M 70 90 L 230 90",
-                    "M 150 90 L 70 290",
-                    "M 150 190 L 230 290"
-                ],
-                strokeNums: [
-                    { x: 70, y: 90, text: "1" },
-                    { x: 150, y: 90, text: "2" },
-                    { x: 150, y: 190, text: "3" }
+                strokes: [
+                    {
+                        path: "M 75 90 L 225 90",
+                        num: { x: 75, y: 90, text: "1" },
+                        checkpoints: [{ x: 75, y: 90 }, { x: 225, y: 90 }]
+                    },
+                    {
+                        path: "M 150 90 L 75 280",
+                        num: { x: 150, y: 90, text: "2" },
+                        checkpoints: [{ x: 150, y: 90 }, { x: 75, y: 280 }]
+                    },
+                    {
+                        path: "M 150 190 L 225 280",
+                        num: { x: 150, y: 190, text: "3" },
+                        checkpoints: [{ x: 150, y: 190 }, { x: 225, y: 280 }]
+                    }
                 ]
             },
             {
                 char: 'ㅊ',
-                checkpoints: [
-                    { x: 80, y: 70 }, { x: 220, y: 70 },
-                    { x: 70, y: 100 }, { x: 230, y: 100 },
-                    { x: 150, y: 100 }, { x: 70, y: 290 },
-                    { x: 150, y: 190 }, { x: 230, y: 290 }
-                ],
-                arrowPaths: [
-                    "M 80 70 L 220 70",
-                    "M 70 100 L 230 100",
-                    "M 150 100 L 70 290",
-                    "M 150 190 L 230 290"
-                ],
-                strokeNums: [
-                    { x: 80, y: 70, text: "1" },
-                    { x: 70, y: 100, text: "2" },
-                    { x: 150, y: 100, text: "3" },
-                    { x: 150, y: 190, text: "4" }
+                strokes: [
+                    {
+                        path: "M 85 65 L 215 65",
+                        num: { x: 85, y: 65, text: "1" },
+                        checkpoints: [{ x: 85, y: 65 }, { x: 215, y: 65 }]
+                    },
+                    {
+                        path: "M 75 100 L 225 100",
+                        num: { x: 75, y: 100, text: "2" },
+                        checkpoints: [{ x: 75, y: 100 }, { x: 225, y: 100 }]
+                    },
+                    {
+                        path: "M 150 100 L 75 280",
+                        num: { x: 150, y: 100, text: "3" },
+                        checkpoints: [{ x: 150, y: 100 }, { x: 75, y: 280 }]
+                    },
+                    {
+                        path: "M 150 190 L 225 280",
+                        num: { x: 150, y: 190, text: "4" },
+                        checkpoints: [{ x: 150, y: 190 }, { x: 225, y: 280 }]
+                    }
                 ]
             },
             {
                 char: 'ㅋ',
-                checkpoints: [
-                    { x: 80, y: 110 }, { x: 220, y: 110 }, { x: 220, y: 290 },
-                    { x: 80, y: 200 }, { x: 220, y: 200 }
-                ],
-                arrowPaths: [
-                    "M 80 110 L 220 110 L 220 290",
-                    "M 80 200 L 220 200"
-                ],
-                strokeNums: [
-                    { x: 80, y: 110, text: "1" },
-                    { x: 80, y: 200, text: "2" }
+                strokes: [
+                    {
+                        path: "M 80 110 L 220 110 L 220 270",
+                        num: { x: 80, y: 110, text: "1" },
+                        checkpoints: [{ x: 80, y: 110 }, { x: 220, y: 110 }, { x: 220, y: 270 }]
+                    },
+                    {
+                        path: "M 80 190 L 220 190",
+                        num: { x: 80, y: 190, text: "2" },
+                        checkpoints: [{ x: 80, y: 190 }, { x: 220, y: 190 }]
+                    }
                 ]
             },
             {
                 char: 'ㅌ',
-                checkpoints: [
-                    { x: 80, y: 110 }, { x: 220, y: 110 },
-                    { x: 80, y: 200 }, { x: 220, y: 200 },
-                    { x: 80, y: 110 }, { x: 80, y: 290 }, { x: 220, y: 290 }
-                ],
-                arrowPaths: [
-                    "M 80 110 L 220 110",
-                    "M 80 200 L 220 200",
-                    "M 80 110 L 80 290 L 220 290"
-                ],
-                strokeNums: [
-                    { x: 80, y: 110, text: "1" },
-                    { x: 80, y: 200, text: "2" },
-                    { x: 80, y: 230, text: "3" } // Offset
+                strokes: [
+                    {
+                        path: "M 80 110 L 220 110",
+                        num: { x: 80, y: 110, text: "1" },
+                        checkpoints: [{ x: 80, y: 110 }, { x: 220, y: 110 }]
+                    },
+                    {
+                        path: "M 80 190 L 220 190",
+                        num: { x: 80, y: 190, text: "2" },
+                        checkpoints: [{ x: 80, y: 190 }, { x: 220, y: 190 }]
+                    },
+                    {
+                        path: "M 80 110 L 80 270 L 220 270",
+                        num: { x: 80, y: 230, text: "3" },
+                        checkpoints: [{ x: 80, y: 270 }, { x: 220, y: 270 }] // Simplified
+                    }
                 ]
             },
             {
                 char: 'ㅍ',
-                checkpoints: [
-                    { x: 70, y: 110 }, { x: 230, y: 110 },
-                    { x: 100, y: 110 }, { x: 100, y: 280 },
-                    { x: 200, y: 110 }, { x: 200, y: 280 },
-                    { x: 70, y: 280 }, { x: 230, y: 280 }
-                ],
-                arrowPaths: [
-                    "M 70 110 L 230 110",
-                    "M 100 110 L 100 280",
-                    "M 200 110 L 200 280",
-                    "M 70 280 L 230 280"
-                ],
-                strokeNums: [
-                    { x: 70, y: 110, text: "1" },
-                    { x: 100, y: 110, text: "2" },
-                    { x: 200, y: 110, text: "3" },
-                    { x: 70, y: 280, text: "4" }
+                strokes: [
+                    {
+                        path: "M 75 110 L 225 110",
+                        num: { x: 75, y: 110, text: "1" },
+                        checkpoints: [{ x: 75, y: 110 }, { x: 225, y: 110 }]
+                    },
+                    {
+                        path: "M 105 110 L 105 270",
+                        num: { x: 105, y: 110, text: "2" },
+                        checkpoints: [{ x: 105, y: 110 }, { x: 105, y: 270 }]
+                    },
+                    {
+                        path: "M 195 110 L 195 270",
+                        num: { x: 195, y: 110, text: "3" },
+                        checkpoints: [{ x: 195, y: 110 }, { x: 195, y: 270 }]
+                    },
+                    {
+                        path: "M 75 270 L 225 270",
+                        num: { x: 75, y: 270, text: "4" },
+                        checkpoints: [{ x: 75, y: 270 }, { x: 225, y: 270 }]
+                    }
                 ]
             },
             {
                 char: 'ㅎ',
-                checkpoints: [
-                    { x: 100, y: 70 }, { x: 200, y: 70 },
-                    { x: 70, y: 120 }, { x: 230, y: 120 },
-                    { x: 150, y: 170 }, { x: 70, y: 250 }, { x: 150, y: 320 }, { x: 230, y: 250 }
-                ],
-                arrowPaths: [
-                    "M 100 70 L 200 70",
-                    "M 70 120 L 230 120",
-                    "M 150 170 C 40 170 40 320 150 320 C 260 320 260 170 150 170"
-                ],
-                strokeNums: [
-                    { x: 100, y: 70, text: "1" },
-                    { x: 70, y: 120, text: "2" },
-                    { x: 150, y: 170, text: "3" }
+                strokes: [
+                    {
+                        path: "M 120 70 L 180 70",
+                        num: { x: 100, y: 70, text: "1" },
+                        checkpoints: [{ x: 150, y: 70 }]
+                    },
+                    {
+                        path: "M 75 110 L 225 110",
+                        num: { x: 65, y: 110, text: "2" },
+                        checkpoints: [{ x: 75, y: 110 }, { x: 225, y: 110 }]
+                    },
+                    {
+                        path: "M 150 160 C 40 160 40 310 150 310 C 260 310 260 160 150 160",
+                        num: { x: 150, y: 160, text: "3" },
+                        checkpoints: [{ x: 150, y: 160 }, { x: 70, y: 240 }, { x: 150, y: 310 }, { x: 230, y: 240 }]
+                    }
                 ]
             }
         ];
 
-        // Simplifying for MVP: All basic consonants, but only precise logic for ㄱ, ㄴ. Others will use pixel check only for now to save time, then we iterate.
-        // Actually, let's implement the "Ordered Checkpoint" system for the first few to demonstrate.
-
         let currentIndex = 0;
         let isDrawing = false;
-        let passedCheckpoints = []; // Indices of passed checkpoints for current char
-        let totalCheckpoints = 0;
+
+        // --- Sequential Stroke Logic ---
+        let currentStrokeIndex = 0; // Which stroke are we on? (0, 1, 2...)
+        let strokePassedCheckpoints = []; // Checkpoints passed for the *current* stroke
 
         // Init Selector
         const charList = ['ㄱ', 'ㄴ', 'ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
@@ -522,62 +578,50 @@
                 b.classList.toggle('active', i === index);
             });
 
-            // Draw Arrows
-            drawArrows(char);
-
-            // Reset Logic
+            // Start Stroke 0
+            currentStrokeIndex = 0;
             resetCanvas();
+            updateGuides();
         }
 
-        function drawArrows(char) {
-            // Clear existing arrows and numbers
-            const existing = arrowLayer.querySelectorAll('path');
-            existing.forEach(e => e.remove());
+        // Render *only* the current stroke's guide
+        function updateGuides() {
+            // Clear all guides
+            arrowLayer.innerHTML = `<defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="rgba(255, 112, 67, 0.6)" />
+                </marker>
+            </defs>`;
+            // Remove floating numbers
             const existingNums = arrowLayer.parentNode.querySelectorAll('.stroke-number');
             existingNums.forEach(e => e.remove());
 
-            // Get Data
             const data = consonants[currentIndex];
-            if (data.char !== char) console.warn("Character mismatch");
+            if (!data || currentStrokeIndex >= data.strokes.length) return;
 
-            if (data && data.arrowPaths) {
-                // Draw Paths
-                data.arrowPaths.forEach(pathD => {
-                    const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    pathEl.setAttribute("d", pathD);
-                    pathEl.setAttribute("class", "guide-arrow");
-                    arrowLayer.appendChild(pathEl);
-                });
+            const stroke = data.strokes[currentStrokeIndex];
 
-                // Draw Stroke Numbers
-                if (data.strokeNums) {
-                    data.strokeNums.forEach(n => {
-                        const numEl = document.createElement('div');
-                        numEl.className = 'stroke-number';
-                        numEl.innerText = n.text;
-                        numEl.style.left = n.x + 'px';
-                        numEl.style.top = n.y + 'px';
-                        arrowLayer.parentNode.appendChild(numEl);
-                    });
-                }
+            // Draw Arrow
+            const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            pathEl.setAttribute("d", stroke.path);
+            pathEl.setAttribute("class", "guide-arrow active");
+            arrowLayer.appendChild(pathEl);
 
-                // Set Checkpoints
-                if (data.checkpoints) {
-                    totalCheckpoints = data.checkpoints;
-                    passedCheckpoints = new Array(totalCheckpoints.length).fill(false);
-                } else {
-                    totalCheckpoints = [];
-                    passedCheckpoints = [];
-                }
-            } else {
-                totalCheckpoints = [];
-                passedCheckpoints = [];
-            }
+            // Draw Number
+            const numEl = document.createElement('div');
+            numEl.className = 'stroke-number active';
+            numEl.innerText = stroke.num.text;
+            numEl.style.left = stroke.num.x + 'px';
+            numEl.style.top = stroke.num.y + 'px';
+            arrowLayer.parentNode.appendChild(numEl);
+
+            // Init Validation for this stroke
+            strokePassedCheckpoints = new Array(stroke.checkpoints.length).fill(false);
         }
 
         // --- Drawing Logic ---
         ctx.strokeStyle = '#2e7d32'; // Dark Green
-        ctx.lineWidth = 35;
+        ctx.lineWidth = 50; // Thicker for better coverage
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
@@ -586,8 +630,8 @@
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
             return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height)
             };
         }
 
@@ -612,7 +656,8 @@
         function endDraw() {
             if (!isDrawing) return;
             isDrawing = false;
-            checkSuccess();
+            // No strict "fail" on lift, just wait for resumption
+            // Check if stroke was completed in moveDraw
         }
 
         canvas.addEventListener('mousedown', startDraw);
@@ -625,41 +670,59 @@
         function resetCanvas() {
             ctx.clearRect(0, 0, width, height);
             closeSuccess();
-            // Reset checkpoints
-            if (totalCheckpoints.length > 0) {
-                passedCheckpoints = new Array(totalCheckpoints.length).fill(false);
-            }
+            // Reset stroke logic
+            currentStrokeIndex = 0;
+            updateGuides();
         }
 
         function validateCheckpoint(x, y) {
-            if (totalCheckpoints.length === 0) return;
+            const data = consonants[currentIndex];
+            if (!data || currentStrokeIndex >= data.strokes.length) return;
 
-            // Find the *next* unpassed checkpoint
-            const nextIndex = passedCheckpoints.indexOf(false);
-            if (nextIndex === -1) return; // All passed
+            const stroke = data.strokes[currentStrokeIndex];
+            const checkpoints = stroke.checkpoints;
 
-            const target = totalCheckpoints[nextIndex];
+            // Simple Flexible Val: Use standard radius
+            // Find next unpassed
+            const nextIndex = strokePassedCheckpoints.indexOf(false);
+            if (nextIndex === -1) return; // All passed for this stroke
+
+            const target = checkpoints[nextIndex];
             const dist = Math.sqrt(Math.pow(x - target.x, 2) + Math.pow(y - target.y, 2));
 
-            // Radius of acceptance
-            if (dist < 50) {
-                passedCheckpoints[nextIndex] = true;
-                console.log(`Checkpoint ${nextIndex} passed!`);
+            // Increased radius (65) for flexibility
+            if (dist < 65) {
+                strokePassedCheckpoints[nextIndex] = true;
+
+                // If Stroke Complete?
+                if (strokePassedCheckpoints.every(p => p === true)) {
+                    // Stroke Done!
+                    completeStroke();
+                }
             }
         }
 
-        function checkSuccess() {
-            // 1. Order Check
-            if (totalCheckpoints.length > 0) {
-                const allPassed = passedCheckpoints.every(p => p === true);
-                if (!allPassed) {
-                    console.log("Order check failed");
-                    return; // Strict order required
-                }
-            }
+        function completeStroke() {
+            console.log(`Stroke ${currentStrokeIndex + 1} Done`);
 
+            // Add a small delay so user sees "done" status or just feels the beat
+            setTimeout(() => {
+                // Advance
+                currentStrokeIndex++;
+
+                const data = consonants[currentIndex];
+                if (currentStrokeIndex >= data.strokes.length) {
+                    // All strokes done -> Check Pixel Coverage
+                    finallizeCharacter();
+                } else {
+                    // Show next guide
+                    updateGuides();
+                }
+            }, 500); // 500ms delay
+        }
+
+        function finallizeCharacter() {
             // 2. Pixel Coverage Check (Validation Buffer)
-            // Create temp buffer
             const targetCanvas = document.createElement('canvas');
             targetCanvas.width = width;
             targetCanvas.height = height;
@@ -687,14 +750,24 @@
             const coverage = coveredPixels / targetPixels;
             console.log(`Coverage: ${(coverage * 100).toFixed(1)}%`);
 
-            if (coverage > 0.55) { // Slightly lower threshold for consonants as they are complex
+            // Flexible threshold
+            if (coverage > 0.3) {
                 showSuccess();
+            } else {
+                console.log("Coverage too low, try again");
+                // Maybe auto-clear or let user clear?
+                // Let's let user modify or clear manually
             }
         }
 
         let autoAdvanceTimer = null;
         function showSuccess() {
             successOverlay.classList.add('show');
+            // Remove guides
+            arrowLayer.innerHTML = "";
+            const existingNums = arrowLayer.parentNode.querySelectorAll('.stroke-number');
+            existingNums.forEach(e => e.remove());
+
             const audio = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
             // audio.play().catch(e => {});
 

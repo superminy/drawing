@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>그림 ABC 알파벳</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+
+        body {
+            font-family: 'Jua', sans-serif;
+            background-color: #e8eaf6;
+            /* Indigo theme */
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            overflow-y: auto;
+            touch-action: pan-y;
+        }
+
+        h1 {
+            color: #303f9f;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #fff;
+            border: 2px solid #3f51b5;
+            border-radius: 20px;
+            padding: 10px 15px;
+            text-decoration: none;
+            color: #3f51b5;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            z-index: 1000;
+        }
+
+        .home-btn:hover {
+            transform: scale(1.05);
+            background: #c5cae9;
+        }
+
+        .case-toggle {
+            margin-bottom: 10px;
+        }
+
+        .case-btn {
+            background: #fff;
+            border: 2px solid #3949ab;
+            color: #3949ab;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-family: 'Jua', sans-serif;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+
+        .case-btn.active {
+            background: #3949ab;
+            color: white;
+        }
+
+        .selector-container {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            max-width: 600px;
+            height: 100px;
+            overflow-y: auto;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 5px;
+        }
+
+        .char-btn {
+            background-color: #fff;
+            border: 2px solid #5c6bc0;
+            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            font-family: 'Jua', sans-serif;
+            color: #283593;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .char-btn:hover {
+            transform: scale(1.1);
+            background-color: #9fa8da;
+        }
+
+        .char-btn.active {
+            background-color: #3f51b5;
+            color: white;
+            border-color: #283593;
+            transform: scale(1.15);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #canvas-container {
+            position: relative;
+            width: 300px;
+            height: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border: 8px solid #9fa8da;
+            overflow: hidden;
+            transform: scale(0.9);
+            transform-origin: center top;
+            margin-top: 40px;
+            margin-bottom: 50px;
+        }
+
+        #guide-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 250px;
+            color: #e0e0e0;
+            pointer-events: none;
+            user-select: none;
+            z-index: 1;
+        }
+
+        #arrow-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 3;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        .btn-action {
+            background-color: #5c6bc0;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            font-family: 'Jua', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Success Message Overlay */
+        #success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        #success-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .success-content {
+            text-align: center;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .reward-image {
+            width: 250px;
+            height: 250px;
+            object-fit: contain;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.1));
+        }
+
+        .reward-emoji {
+            font-size: 150px;
+            line-height: 1.2;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .reward-word {
+            font-size: 4em;
+            color: #303f9f;
+            text-shadow: 2px 2px 0px #fff, 4px 4px 0px #c5cae9;
+            margin-bottom: 10px;
+        }
+
+        .success-text {
+            font-size: 2em;
+            color: #ffca28;
+            margin-bottom: 20px;
+        }
+
+        /* Arrow Styles */
+        .guide-arrow {
+            fill: none;
+            stroke: rgba(63, 81, 181, 0.6);
+            stroke-width: 5;
+            stroke-dasharray: 10 5;
+            marker-end: url(#arrowhead);
+            animation: dash 1s linear infinite;
+        }
+
+        .guide-arrow.active {
+            stroke: rgba(63, 81, 181, 1);
+            stroke-width: 7;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -15;
+            }
+        }
+
+        .stroke-number {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: rgba(63, 81, 181, 0.9);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 4;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .stroke-number.active {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="index.html" class="home-btn">🏠 홈으로</a>
+    <h1>그림 ABC 알파벳</h1>
+
+    <div class="case-toggle">
+        <button class="case-btn active" onclick="setCase('upper')">대문자 (ABC)</button>
+        <button class="case-btn" onclick="setCase('lower')">소문자 (abc)</button>
+    </div>
+
+    <div class="selector-container" id="selector"></div>
+
+    <div id="canvas-container">
+        <div id="guide-layer">A</div>
+        <svg id="arrow-layer" width="300" height="400">
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="rgba(63, 81, 181, 0.6)" />
+                </marker>
+            </defs>
+        </svg>
+        <canvas id="drawCanvas" width="300" height="400"></canvas>
+    </div>
+
+    <div class="controls">
+        <button class="btn-action" onclick="resetCanvas()">지우기 (다시하기)</button>
+    </div>
+
+    <div id="success-overlay">
+        <div class="success-content">
+            <div id="reward-visual"></div>
+            <div class="reward-word" id="reward-word">Word</div>
+            <div class="success-text">참 잘했어요!</div>
+            <button class="btn-action" style="background:#4caf50;" onclick="nextChar()">다음 글자!</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        const guideEl = document.getElementById('guide-layer');
+        const arrowLayer = document.getElementById('arrow-layer');
+        const successOverlay = document.getElementById('success-overlay');
+        const selectorContainer = document.getElementById('selector');
+        const rewardVisualEl = document.getElementById('reward-visual');
+        const rewardWordEl = document.getElementById('reward-word');
+
+        const width = 300;
+        const height = 400;
+        let isUppercase = true;
+
+        const alphabetUpper = [
+            { char: 'A', rewards: [{ word: "Apple", fallback: "🍎" }, { word: "Ant", fallback: "🐜" }, { word: "Airplane", fallback: "✈️" }], strokes: [{ path: "M 150 80 L 70 280", num: { x: 150, y: 80, text: "1" }, checkpoints: [{ x: 150, y: 80 }, { x: 70, y: 280 }] }, { path: "M 150 80 L 230 280", num: { x: 170, y: 100, text: "2" }, checkpoints: [{ x: 150, y: 80 }, { x: 230, y: 280 }] }, { path: "M 100 180 L 200 180", num: { x: 100, y: 180, text: "3" }, checkpoints: [{ x: 100, y: 180 }, { x: 200, y: 180 }] }] },
+            { char: 'B', rewards: [{ word: "Bear", fallback: "🐻" }, { word: "Banana", fallback: "🍌" }, { word: "Ball", fallback: "⚽" }], strokes: [{ path: "M 90 80 L 90 280", num: { x: 90, y: 80, text: "1" }, checkpoints: [{ x: 90, y: 80 }, { x: 90, y: 280 }] }, { path: "M 90 80 C 180 80 180 180 90 180 C 200 180 200 280 90 280", num: { x: 110, y: 80, text: "2" }, checkpoints: [{ x: 90, y: 80 }, { x: 170, y: 130 }, { x: 90, y: 180 }, { x: 180, y: 230 }, { x: 90, y: 280 }] }] },
+            { char: 'C', rewards: [{ word: "Cat", fallback: "🐱" }, { word: "Cake", fallback: "🍰" }, { word: "Car", fallback: "🚗" }], strokes: [{ path: "M 220 100 C 50 100 50 280 220 280", num: { x: 220, y: 100, text: "1" }, checkpoints: [{ x: 220, y: 100 }, { x: 70, y: 190 }, { x: 220, y: 280 }] }] },
+            { char: 'D', rewards: [{ word: "Dog", fallback: "🐶" }, { word: "Duck", fallback: "🦆" }, { word: "Drum", fallback: "🥁" }], strokes: [{ path: "M 90 80 L 90 280", num: { x: 90, y: 80, text: "1" }, checkpoints: [{ x: 90, y: 80 }, { x: 90, y: 280 }] }, { path: "M 90 80 C 240 80 240 280 90 280", num: { x: 110, y: 80, text: "2" }, checkpoints: [{ x: 90, y: 80 }, { x: 220, y: 180 }, { x: 90, y: 280 }] }] },
+            { char: 'E', rewards: [{ word: "Egg", fallback: "🥚" }, { word: "Elephant", fallback: "🐘" }, { word: "Eye", fallback: "👁️" }], strokes: [{ path: "M 210 80 L 90 80 L 90 280 L 210 280", num: { x: 210, y: 80, text: "1" }, checkpoints: [{ x: 210, y: 80 }, { x: 90, y: 80 }, { x: 90, y: 280 }, { x: 210, y: 280 }] }, { path: "M 90 180 L 190 180", num: { x: 100, y: 180, text: "2" }, checkpoints: [{ x: 90, y: 180 }, { x: 190, y: 180 }] }] },
+            { char: 'F', rewards: [{ word: "Fish", fallback: "🐟" }, { word: "Flower", fallback: "🌸" }, { word: "Frog", fallback: "🐸" }], strokes: [{ path: "M 90 80 L 90 280", num: { x: 90, y: 80, text: "1" }, checkpoints: [{ x: 90, y: 80 }, { x: 90, y: 280 }] }, { path: "M 90 80 L 210 80", num: { x: 110, y: 80, text: "2" }, checkpoints: [{ x: 90, y: 80 }, { x: 210, y: 80 }] }, { path: "M 90 180 L 190 180", num: { x: 110, y: 180, text: "3" }, checkpoints: [{ x: 90, y: 180 }, { x: 190, y: 180 }] }] },
+            { char: 'G', rewards: [{ word: "Giraffe", fallback: "🦒" }, { word: "Grape", fallback: "🍇" }, { word: "Guitar", fallback: "🎸" }], strokes: [{ path: "M 220 100 C 50 100 50 280 150 280 L 220 280 L 220 190 L 150 190", num: { x: 220, y: 100, text: "1" }, checkpoints: [{ x: 220, y: 100 }, { x: 70, y: 190 }, { x: 150, y: 280 }, { x: 220, y: 280 }, { x: 150, y: 190 }] }] },
+            { char: 'H', rewards: [{ word: "Hat", fallback: "🎩" }, { word: "House", fallback: "🏠" }, { word: "Horse", fallback: "🐴" }], strokes: [{ path: "M 90 80 L 90 280", num: { x: 90, y: 80, text: "1" }, checkpoints: [{ x: 90, y: 80 }, { x: 90, y: 280 }] }, { path: "M 210 80 L 210 280", num: { x: 210, y: 80, text: "2" }, checkpoints: [{ x: 210, y: 80 }, { x: 210, y: 280 }] }, { path: "M 90 180 L 210 180", num: { x: 150, y: 180, text: "3" }, checkpoints: [{ x: 90, y: 180 }, { x: 210, y: 180 }] }] },
+            { char: 'I', rewards: [{ word: "Ice Cream", fallback: "🍦" }, { word: "Igloo", fallback: "🧊" }, { word: "Island", fallback: "🏝️" }], strokes: [{ path: "M 150 80 L 150 280", num: { x: 150, y: 80, text: "1" }, checkpoints: [{ x: 150, y: 80 }, { x: 150, y: 280 }] }, { path: "M 100 80 L 200 80", num: { x: 100, y: 80, text: "2" }, checkpoints: [{ x: 100, y: 80 }, { x: 200, y: 80 }] }, { path: "M 100 280 L 200 280", num: { x: 100, y: 280, text: "3" }, checkpoints: [{ x: 100, y: 280 }, { x: 200, y: 280 }] }] },
+            { char: 'J', rewards: [{ word: "Jellyfish", fallback: "🪼" }, { word: "Juice", fallback: "🧃" }, { word: "Jacket", fallback: "🧥" }], strokes: [{ path: "M 200 80 L 200 250 C 200 300 100 300 100 250", num: { x: 200, y: 80, text: "1" }, checkpoints: [{ x: 200, y: 80 }, { x: 200, y: 250 }, { x: 100, y: 250 }] }] },
+            { char: 'K', rewards: [{ word: "Key", fallback: "🔑" }, { word: "Kite", fallback: "🪁" }, { word: "Kangaroo", fallback: "🦘" }], strokes: [{ path: "M 90 80 L 90 280", num: { x: 90, y: 80, text: "1" }, checkpoints: [{ x: 90, y: 80 }, { x: 90, y: 280 }] }, { path: "M 210 80 L 90 180", num: { x: 210, y: 80, text: "2" }, checkpoints: [{ x: 210, y: 80 }, { x: 90, y: 180 }] }, { path: "M 130 150 L 210 280", num: { x: 140, y: 160, text: "3" }, checkpoints: [{ x: 130, y: 150 }, { x: 210, y: 280 }] }] },
+            { char: 'L', rewards: [{ word: "Lion", fallback: "🦁" }, { word: "Lemon", fallback: "🍋" }, { word: "Leaf", fallback: "🍃" }], strokes: [{ path: "M 90 80 L 90 280 L 210 280", num: { x: 90, y: 80, text: "1" }, checkpoints: [{ x: 90, y: 80 }, { x: 90, y: 280 }, { x: 210, y: 280 }] }] },
+            { char: 'M', rewards: [{ word: "Monkey", fallback: "🐵" }, { word: "Moon", fallback: "🌙" }, { word: "Mouse", fallback: "🐭" }], strokes: [{ path: "M 80 280 L 80 80", num: { x: 80, y: 260, text: "1" }, checkpoints: [{ x: 80, y: 280 }, { x: 80, y: 80 }] }, { path: "M 80 80 L 150 200 L 220 80", num: { x: 100, y: 80, text: "2" }, checkpoints: [{ x: 80, y: 80 }, { x: 150, y: 200 }, { x: 220, y: 80 }] }, { path: "M 220 80 L 220 280", num: { x: 220, y: 100, text: "3" }, checkpoints: [{ x: 220, y: 80 }, { x: 220, y: 280 }] }] },
+            { char: 'N', rewards: [{ word: "Nose", fallback: "👃" }, { word: "Night", fallback: "🌃" }, { word: "Nine", fallback: "9️⃣" }], strokes: [{ path: "M 80 280 L 80 80", num: { x: 80, y: 260, text: "1" }, checkpoints: [{ x: 80, y: 280 }, { x: 80, y: 80 }] }, { path: "M 80 80 L 220 280", num: { x: 100, y: 80, text: "2" }, checkpoints: [{ x: 80, y: 80 }, { x: 220, y: 280 }] }, { path: "M 220 280 L 220 80", num: { x: 220, y: 260, text: "3" }, checkpoints: [{ x: 220, y: 280 }, { x: 220, y: 80 }] }] },
+            { char: 'O', rewards: [{ word: "Orange", fallback: "🍊" }, { word: "Octopus", fallback: "🐙" }, { word: "Owl", fallback: "🦉" }], strokes: [{ path: "M 150 80 C 50 80 50 280 150 280 C 250 280 250 80 150 80", num: { x: 150, y: 80, text: "1" }, checkpoints: [{ x: 150, y: 80 }, { x: 70, y: 180 }, { x: 150, y: 280 }, { x: 230, y: 180 }] }] },
+            { char: 'P', rewards: [{ word: "Pig", fallback: "🐷" }, { word: "Pizza", fallback: "🍕" }, { word: "Penguin", fallback: "🐧" }], strokes: [{ path: "M 90 80 L 90 280", num: { x: 90, y: 80, text: "1" }, checkpoints: [{ x: 90, y: 80 }, { x: 90, y: 280 }] }, { path: "M 90 80 C 180 80 180 180 90 180", num: { x: 110, y: 80, text: "2" }, checkpoints: [{ x: 90, y: 80 }, { x: 170, y: 130 }, { x: 90, y: 180 }] }] },
+            { char: 'Q', rewards: [{ word: "Queen", fallback: "👑" }, { word: "Question", fallback: "❓" }, { word: "Quiet", fallback: "🤫" }], strokes: [{ path: "M 150 80 C 50 80 50 280 150 280 C 250 280 250 80 150 80", num: { x: 150, y: 80, text: "1" }, checkpoints: [{ x: 150, y: 80 }, { x: 70, y: 180 }, { x: 150, y: 280 }, { x: 230, y: 180 }] }, { path: "M 170 220 L 230 290", num: { x: 180, y: 230, text: "2" }, checkpoints: [{ x: 170, y: 220 }, { x: 230, y: 290 }] }] },
+            { char: 'R', rewards: [{ word: "Rabbit", fallback: "🐰" }, { word: "Rainbow", fallback: "🌈" }, { word: "Robot", fallback: "🤖" }], strokes: [{ path: "M 90 80 L 90 280", num: { x: 90, y: 80, text: "1" }, checkpoints: [{ x: 90, y: 80 }, { x: 90, y: 280 }] }, { path: "M 90 80 C 180 80 180 180 90 180", num: { x: 110, y: 80, text: "2" }, checkpoints: [{ x: 90, y: 80 }, { x: 170, y: 130 }, { x: 90, y: 180 }] }, { path: "M 150 180 L 210 280", num: { x: 160, y: 180, text: "3" }, checkpoints: [{ x: 150, y: 180 }, { x: 210, y: 280 }] }] },
+            { char: 'S', rewards: [{ word: "Sun", fallback: "☀️" }, { word: "Star", fallback: "⭐" }, { word: "Snake", fallback: "🐍" }], strokes: [{ path: "M 210 100 C 150 50 90 140 150 180 C 210 210 150 310 90 260", num: { x: 210, y: 100, text: "1" }, checkpoints: [{ x: 210, y: 100 }, { x: 90, y: 140 }, { x: 210, y: 210 }, { x: 90, y: 260 }] }] },
+            { char: 'T', rewards: [{ word: "Tiger", fallback: "🐯" }, { word: "Tree", fallback: "🌳" }, { word: "Train", fallback: "🚂" }], strokes: [{ path: "M 80 80 L 220 80", num: { x: 80, y: 80, text: "1" }, checkpoints: [{ x: 80, y: 80 }, { x: 220, y: 80 }] }, { path: "M 150 80 L 150 280", num: { x: 150, y: 80, text: "2" }, checkpoints: [{ x: 150, y: 80 }, { x: 150, y: 280 }] }] },
+            { char: 'U', rewards: [{ word: "Umbrella", fallback: "☂️" }, { word: "Unicorn", fallback: "🦄" }, { word: "Up", fallback: "⬆️" }], strokes: [{ path: "M 90 80 L 90 220 C 90 300 210 300 210 220 L 210 80", num: { x: 90, y: 80, text: "1" }, checkpoints: [{ x: 90, y: 80 }, { x: 90, y: 220 }, { x: 150, y: 280 }, { x: 210, y: 220 }, { x: 210, y: 80 }] }] },
+            { char: 'V', rewards: [{ word: "Violin", fallback: "🎻" }, { word: "Volcano", fallback: "🌋" }, { word: "Van", fallback: "🚐" }], strokes: [{ path: "M 80 80 L 150 280 L 220 80", num: { x: 80, y: 80, text: "1" }, checkpoints: [{ x: 80, y: 80 }, { x: 150, y: 280 }, { x: 220, y: 80 }] }] },
+            { char: 'W', rewards: [{ word: "Whale", fallback: "🐳" }, { word: "Water", fallback: "💧" }, { word: "Watch", fallback: "⌚" }], strokes: [{ path: "M 60 80 L 90 280 L 150 150 L 210 280 L 240 80", num: { x: 60, y: 80, text: "1" }, checkpoints: [{ x: 60, y: 80 }, { x: 90, y: 280 }, { x: 150, y: 150 }, { x: 210, y: 280 }, { x: 240, y: 80 }] }] },
+            { char: 'X', rewards: [{ word: "Xylophone", fallback: "🎹" }, { word: "X-ray", fallback: "🩻" }, { word: "Box", fallback: "📦" }], strokes: [{ path: "M 80 80 L 220 280", num: { x: 80, y: 80, text: "1" }, checkpoints: [{ x: 80, y: 80 }, { x: 220, y: 280 }] }, { path: "M 220 80 L 80 280", num: { x: 220, y: 80, text: "2" }, checkpoints: [{ x: 220, y: 80 }, { x: 80, y: 280 }] }] },
+            { char: 'Y', rewards: [{ word: "Yellow", fallback: "🟡" }, { word: "Yacht", fallback: "🛥️" }, { word: "Yes", fallback: "🙆" }], strokes: [{ path: "M 80 80 L 150 180", num: { x: 80, y: 80, text: "1" }, checkpoints: [{ x: 80, y: 80 }, { x: 150, y: 180 }] }, { path: "M 220 80 L 150 180", num: { x: 220, y: 80, text: "2" }, checkpoints: [{ x: 220, y: 80 }, { x: 150, y: 180 }] }, { path: "M 150 180 L 150 280", num: { x: 150, y: 180, text: "3" }, checkpoints: [{ x: 150, y: 180 }, { x: 150, y: 280 }] }] },
+            { char: 'Z', rewards: [{ word: "Zebra", fallback: "🦓" }, { word: "Zoo", fallback: "🦁" }, { word: "Zipper", fallback: "🤐" }], strokes: [{ path: "M 80 80 L 220 80 L 80 280 L 220 280", num: { x: 80, y: 80, text: "1" }, checkpoints: [{ x: 80, y: 80 }, { x: 220, y: 80 }, { x: 80, y: 280 }, { x: 220, y: 280 }] }] }
+        ];
+
+        const alphabetLower = [
+            { char: 'a', rewards: [{ word: "Apple", fallback: "🍎" }, { word: "Ant", fallback: "🐜" }, { word: "Airplane", fallback: "✈️" }], strokes: [{ path: "M 180 140 C 90 140 90 240 180 240 L 180 140 L 180 240", num: { x: 180, y: 140, text: "1" }, checkpoints: [{ x: 180, y: 140 }, { x: 110, y: 190 }, { x: 180, y: 240 }] }] },
+            { char: 'b', rewards: [{ word: "Bear", fallback: "🐻" }, { word: "Banana", fallback: "🍌" }, { word: "Ball", fallback: "⚽" }], strokes: [{ path: "M 90 80 L 90 280", num: { x: 90, y: 80, text: "1" }, checkpoints: [{ x: 90, y: 80 }, { x: 90, y: 280 }] }, { path: "M 90 200 C 180 200 180 280 90 280", num: { x: 90, y: 200, text: "2" }, checkpoints: [{ x: 90, y: 200 }, { x: 170, y: 240 }, { x: 90, y: 280 }] }] },
+            { char: 'c', rewards: [{ word: "Cat", fallback: "🐱" }, { word: "Cake", fallback: "🍰" }, { word: "Car", fallback: "🚗" }], strokes: [{ path: "M 190 140 C 90 140 90 240 190 240", num: { x: 190, y: 140, text: "1" }, checkpoints: [{ x: 190, y: 140 }, { x: 110, y: 190 }, { x: 190, y: 240 }] }] },
+            { char: 'd', rewards: [{ word: "Dog", fallback: "🐶" }, { word: "Duck", fallback: "🦆" }, { word: "Drum", fallback: "🥁" }], strokes: [{ path: "M 200 140 C 110 140 110 240 200 240", num: { x: 200, y: 140, text: "1" }, checkpoints: [{ x: 200, y: 140 }, { x: 120, y: 190 }, { x: 200, y: 240 }] }, { path: "M 200 80 L 200 240", num: { x: 200, y: 80, text: "2" }, checkpoints: [{ x: 200, y: 80 }, { x: 200, y: 240 }] }] },
+            { char: 'e', rewards: [{ word: "Egg", fallback: "🥚" }, { word: "Elephant", fallback: "🐘" }, { word: "Eye", fallback: "👁️" }], strokes: [{ path: "M 90 190 L 190 190 C 190 140 90 140 90 190 C 90 250 200 250 200 230", num: { x: 90, y: 190, text: "1" }, checkpoints: [{ x: 90, y: 190 }, { x: 190, y: 190 }, { x: 140, y: 150 }, { x: 90, y: 190 }, { x: 140, y: 250 }, { x: 200, y: 230 }] }] },
+            { char: 'f', rewards: [{ word: "Fish", fallback: "🐟" }, { word: "Flower", fallback: "🌸" }, { word: "Frog", fallback: "🐸" }], strokes: [{ path: "M 180 80 C 130 80 130 140 130 280", num: { x: 180, y: 80, text: "1" }, checkpoints: [{ x: 180, y: 80 }, { x: 130, y: 140 }, { x: 130, y: 280 }] }, { path: "M 100 140 L 160 140", num: { x: 100, y: 140, text: "2" }, checkpoints: [{ x: 100, y: 140 }, { x: 160, y: 140 }] }] },
+            { char: 'g', rewards: [{ word: "Giraffe", fallback: "🦒" }, { word: "Grape", fallback: "🍇" }, { word: "Guitar", fallback: "🎸" }], strokes: [{ path: "M 190 140 C 100 140 100 240 190 240", num: { x: 190, y: 140, text: "1" }, checkpoints: [{ x: 190, y: 140 }, { x: 110, y: 190 }, { x: 190, y: 240 }] }, { path: "M 190 140 L 190 300 C 190 350 120 350 120 320", num: { x: 190, y: 160, text: "2" }, checkpoints: [{ x: 190, y: 140 }, { x: 190, y: 300 }, { x: 120, y: 320 }] }] },
+            { char: 'h', rewards: [{ word: "Hat", fallback: "🎩" }, { word: "House", fallback: "🏠" }, { word: "Horse", fallback: "🐴" }], strokes: [{ path: "M 90 80 L 90 280", num: { x: 90, y: 80, text: "1" }, checkpoints: [{ x: 90, y: 80 }, { x: 90, y: 280 }] }, { path: "M 90 180 C 190 140 190 280 190 280", num: { x: 110, y: 190, text: "2" }, checkpoints: [{ x: 90, y: 180 }, { x: 190, y: 160 }, { x: 190, y: 280 }] }] },
+            { char: 'i', rewards: [{ word: "Ice Cream", fallback: "🍦" }, { word: "Igloo", fallback: "🧊" }, { word: "Island", fallback: "🏝️" }], strokes: [{ path: "M 150 140 L 150 280", num: { x: 140, y: 140, text: "1" }, checkpoints: [{ x: 150, y: 140 }, { x: 150, y: 280 }] }, { path: "M 150 100 L 150 110", num: { x: 140, y: 100, text: "2" }, checkpoints: [{ x: 150, y: 100 }] }] },
+            { char: 'j', rewards: [{ word: "Jellyfish", fallback: "🪼" }, { word: "Juice", fallback: "🧃" }, { word: "Jacket", fallback: "🧥" }], strokes: [{ path: "M 150 140 L 150 320 C 150 360 90 360 90 330", num: { x: 160, y: 140, text: "1" }, checkpoints: [{ x: 150, y: 140 }, { x: 150, y: 320 }] }, { path: "M 150 100 L 150 110", num: { x: 160, y: 100, text: "2" }, checkpoints: [{ x: 150, y: 100 }] }] },
+            { char: 'k', rewards: [{ word: "Key", fallback: "🔑" }, { word: "Kite", fallback: "🪁" }, { word: "Kangaroo", fallback: "🦘" }], strokes: [{ path: "M 90 80 L 90 280", num: { x: 90, y: 80, text: "1" }, checkpoints: [{ x: 90, y: 80 }, { x: 90, y: 280 }] }, { path: "M 180 140 L 90 200", num: { x: 180, y: 140, text: "2" }, checkpoints: [{ x: 180, y: 140 }, { x: 90, y: 200 }] }, { path: "M 120 180 L 190 280", num: { x: 120, y: 190, text: "3" }, checkpoints: [{ x: 120, y: 180 }, { x: 190, y: 280 }] }] },
+            { char: 'l', rewards: [{ word: "Lion", fallback: "🦁" }, { word: "Lemon", fallback: "🍋" }, { word: "Leaf", fallback: "🍃" }], strokes: [{ path: "M 150 80 L 150 280", num: { x: 150, y: 80, text: "1" }, checkpoints: [{ x: 150, y: 80 }, { x: 150, y: 280 }] }] },
+            { char: 'm', rewards: [{ word: "Monkey", fallback: "🐵" }, { word: "Moon", fallback: "🌙" }, { word: "Mouse", fallback: "🐭" }], strokes: [{ path: "M 80 140 L 80 280", num: { x: 80, y: 140, text: "1" }, checkpoints: [{ x: 80, y: 140 }, { x: 80, y: 280 }] }, { path: "M 80 160 C 140 140 140 280 140 280", num: { x: 100, y: 150, text: "2" }, checkpoints: [{ x: 80, y: 160 }, { x: 140, y: 160 }, { x: 140, y: 280 }] }, { path: "M 140 160 C 200 140 200 280 200 280", num: { x: 160, y: 150, text: "3" }, checkpoints: [{ x: 140, y: 160 }, { x: 200, y: 160 }, { x: 200, y: 280 }] }] },
+            { char: 'n', rewards: [{ word: "Nose", fallback: "👃" }, { word: "Night", fallback: "🌃" }, { word: "Nine", fallback: "9️⃣" }], strokes: [{ path: "M 90 140 L 90 280", num: { x: 90, y: 140, text: "1" }, checkpoints: [{ x: 90, y: 140 }, { x: 90, y: 280 }] }, { path: "M 90 180 C 190 140 190 280 190 280", num: { x: 110, y: 180, text: "2" }, checkpoints: [{ x: 90, y: 180 }, { x: 190, y: 160 }, { x: 190, y: 280 }] }] },
+            { char: 'o', rewards: [{ word: "Orange", fallback: "🍊" }, { word: "Octopus", fallback: "🐙" }, { word: "Owl", fallback: "🦉" }], strokes: [{ path: "M 150 140 C 90 140 90 240 150 240 C 210 240 210 140 150 140", num: { x: 150, y: 140, text: "1" }, checkpoints: [{ x: 150, y: 140 }, { x: 100, y: 190 }, { x: 150, y: 240 }, { x: 200, y: 190 }] }] },
+            { char: 'p', rewards: [{ word: "Pig", fallback: "🐷" }, { word: "Pizza", fallback: "🍕" }, { word: "Penguin", fallback: "🐧" }], strokes: [{ path: "M 90 140 L 90 320", num: { x: 90, y: 140, text: "1" }, checkpoints: [{ x: 90, y: 140 }, { x: 90, y: 320 }] }, { path: "M 90 140 C 210 140 210 240 90 240", num: { x: 110, y: 150, text: "2" }, checkpoints: [{ x: 90, y: 140 }, { x: 190, y: 190 }, { x: 90, y: 240 }] }] },
+            { char: 'q', rewards: [{ word: "Queen", fallback: "👑" }, { word: "Question", fallback: "❓" }, { word: "Quiet", fallback: "🤫" }], strokes: [{ path: "M 170 140 C 80 140 80 240 170 240", num: { x: 170, y: 140, text: "1" }, checkpoints: [{ x: 170, y: 140 }, { x: 90, y: 190 }, { x: 170, y: 240 }] }, { path: "M 170 140 L 170 320", num: { x: 190, y: 160, text: "2" }, checkpoints: [{ x: 170, y: 140 }, { x: 170, y: 320 }] }] },
+            { char: 'r', rewards: [{ word: "Rabbit", fallback: "🐰" }, { word: "Rainbow", fallback: "🌈" }, { word: "Robot", fallback: "🤖" }], strokes: [{ path: "M 90 140 L 90 280", num: { x: 90, y: 140, text: "1" }, checkpoints: [{ x: 90, y: 140 }, { x: 90, y: 280 }] }, { path: "M 90 180 C 160 140 190 160 190 180", num: { x: 100, y: 190, text: "2" }, checkpoints: [{ x: 90, y: 180 }, { x: 190, y: 180 }] }] },
+            { char: 's', rewards: [{ word: "Sun", fallback: "☀️" }, { word: "Star", fallback: "⭐" }, { word: "Snake", fallback: "🐍" }], strokes: [{ path: "M 190 150 C 140 130 90 180 140 200 C 190 220 140 260 90 240", num: { x: 190, y: 150, text: "1" }, checkpoints: [{ x: 190, y: 150 }, { x: 140, y: 160 }, { x: 140, y: 240 }, { x: 90, y: 240 }] }] },
+            { char: 't', rewards: [{ word: "Tiger", fallback: "🐯" }, { word: "Tree", fallback: "🌳" }, { word: "Train", fallback: "🚂" }], strokes: [{ path: "M 150 100 L 150 260 C 150 280 180 280 180 260", num: { x: 150, y: 100, text: "1" }, checkpoints: [{ x: 150, y: 100 }, { x: 150, y: 260 }] }, { path: "M 120 140 L 180 140", num: { x: 120, y: 140, text: "2" }, checkpoints: [{ x: 120, y: 140 }, { x: 180, y: 140 }] }] },
+            { char: 'u', rewards: [{ word: "Umbrella", fallback: "☂️" }, { word: "Unicorn", fallback: "🦄" }, { word: "Up", fallback: "⬆️" }], strokes: [{ path: "M 90 140 L 90 220 C 90 260 170 260 170 220 L 170 140", num: { x: 90, y: 140, text: "1" }, checkpoints: [{ x: 90, y: 140 }, { x: 130, y: 250 }, { x: 170, y: 140 }] }] },
+            { char: 'v', rewards: [{ word: "Violin", fallback: "🎻" }, { word: "Volcano", fallback: "🌋" }, { word: "Van", fallback: "🚐" }], strokes: [{ path: "M 90 140 L 140 280 L 190 140", num: { x: 90, y: 140, text: "1" }, checkpoints: [{ x: 90, y: 140 }, { x: 140, y: 280 }, { x: 190, y: 140 }] }] },
+            { char: 'w', rewards: [{ word: "Whale", fallback: "🐳" }, { word: "Water", fallback: "💧" }, { word: "Watch", fallback: "⌚" }], strokes: [{ path: "M 60 140 L 90 280 L 140 180 L 190 280 L 220 140", num: { x: 60, y: 140, text: "1" }, checkpoints: [{ x: 60, y: 140 }, { x: 90, y: 280 }, { x: 140, y: 180 }, { x: 190, y: 280 }, { x: 220, y: 140 }] }] },
+            { char: 'x', rewards: [{ word: "Xylophone", fallback: "🎹" }, { word: "X-ray", fallback: "🩻" }, { word: "Box", fallback: "📦" }], strokes: [{ path: "M 90 140 L 190 280", num: { x: 90, y: 140, text: "1" }, checkpoints: [{ x: 90, y: 140 }, { x: 190, y: 280 }] }, { path: "M 190 140 L 90 280", num: { x: 190, y: 140, text: "2" }, checkpoints: [{ x: 190, y: 140 }, { x: 90, y: 280 }] }] },
+            { char: 'y', rewards: [{ word: "Yellow", fallback: "🟡" }, { word: "Yacht", fallback: "🛥️" }, { word: "Yes", fallback: "🙆" }], strokes: [{ path: "M 90 140 L 140 280", num: { x: 90, y: 140, text: "1" }, checkpoints: [{ x: 90, y: 140 }, { x: 140, y: 280 }] }, { path: "M 200 140 L 100 320", num: { x: 200, y: 140, text: "2" }, checkpoints: [{ x: 200, y: 140 }, { x: 100, y: 320 }] }] },
+            { char: 'z', rewards: [{ word: "Zebra", fallback: "🦓" }, { word: "Zoo", fallback: "🦁" }, { word: "Zipper", fallback: "🤐" }], strokes: [{ path: "M 90 140 L 190 140 L 90 280 L 190 280", num: { x: 90, y: 140, text: "1" }, checkpoints: [{ x: 90, y: 140 }, { x: 190, y: 140 }, { x: 90, y: 280 }, { x: 190, y: 280 }] }] }
+        ];
+
+        let currentSet = alphabetUpper;
+        let currentIndex = 0;
+        let isDrawing = false;
+        let currentStrokeIndex = 0;
+        let strokePassedCheckpoints = [];
+
+        function setCase(c) {
+            isUppercase = (c === 'upper');
+            document.querySelectorAll('.case-btn').forEach(b => {
+                b.classList.toggle('active', b.innerText.includes(isUppercase ? '대문자' : '소문자'));
+            });
+            currentSet = isUppercase ? alphabetUpper : alphabetLower;
+            renderSelector();
+            setChar(0);
+        }
+
+        function renderSelector() {
+            selectorContainer.innerHTML = '';
+            currentSet.forEach((item, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'char-btn';
+                btn.innerText = item.char;
+                btn.onclick = () => setChar(idx);
+                selectorContainer.appendChild(btn);
+            });
+        }
+
+        function setChar(index) {
+            currentIndex = index;
+            const charObj = currentSet[index];
+            guideEl.innerText = charObj.char;
+
+            document.querySelectorAll('.char-btn').forEach((b, i) => {
+                b.classList.toggle('active', i === index);
+            });
+
+            currentStrokeIndex = 0;
+            resetCanvas();
+            updateGuides();
+        }
+
+        function updateGuides() {
+            arrowLayer.innerHTML = `<defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="rgba(63, 81, 181, 0.6)" />
+                </marker>
+            </defs>`;
+            const existingNums = arrowLayer.parentNode.querySelectorAll('.stroke-number');
+            existingNums.forEach(e => e.remove());
+
+            const data = currentSet[currentIndex];
+            if (!data || currentStrokeIndex >= data.strokes.length) return;
+
+            const stroke = data.strokes[currentStrokeIndex];
+
+            const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            pathEl.setAttribute("d", stroke.path);
+            pathEl.setAttribute("class", "guide-arrow active");
+            arrowLayer.appendChild(pathEl);
+
+            const numEl = document.createElement('div');
+            numEl.className = 'stroke-number active';
+            numEl.innerText = stroke.num.text;
+            numEl.style.left = stroke.num.x + 'px';
+            numEl.style.top = stroke.num.y + 'px';
+            arrowLayer.parentNode.appendChild(numEl);
+
+            strokePassedCheckpoints = new Array(stroke.checkpoints.length).fill(false);
+        }
+
+        ctx.strokeStyle = '#303f9f';
+        ctx.lineWidth = 50;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        function startDraw(e) {
+            isDrawing = true;
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            validateCheckpoint(pos.x, pos.y);
+            e.preventDefault();
+        }
+
+        function moveDraw(e) {
+            if (!isDrawing) return;
+            const pos = getPos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            validateCheckpoint(pos.x, pos.y);
+            e.preventDefault();
+        }
+
+        function endDraw() {
+            isDrawing = false;
+        }
+
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', moveDraw);
+        window.addEventListener('mouseup', endDraw);
+        canvas.addEventListener('touchstart', startDraw, { passive: false });
+        canvas.addEventListener('touchmove', moveDraw, { passive: false });
+        canvas.addEventListener('touchend', endDraw);
+
+        function resetCanvas() {
+            ctx.clearRect(0, 0, width, height);
+            closeSuccess();
+            currentStrokeIndex = 0;
+            updateGuides();
+        }
+
+        function validateCheckpoint(x, y) {
+            const data = currentSet[currentIndex];
+            if (!data || currentStrokeIndex >= data.strokes.length) return;
+
+            const stroke = data.strokes[currentStrokeIndex];
+            const checkpoints = stroke.checkpoints;
+
+            const nextIndex = strokePassedCheckpoints.indexOf(false);
+            if (nextIndex === -1) return;
+
+            const target = checkpoints[nextIndex];
+            const dist = Math.sqrt(Math.pow(x - target.x, 2) + Math.pow(y - target.y, 2));
+
+            if (dist < 65) {
+                strokePassedCheckpoints[nextIndex] = true;
+                if (strokePassedCheckpoints.every(p => p === true)) {
+                    completeStroke();
+                }
+            }
+        }
+
+        function completeStroke() {
+            setTimeout(() => {
+                currentStrokeIndex++;
+                const data = currentSet[currentIndex];
+                if (currentStrokeIndex >= data.strokes.length) {
+                    finallizeCharacter();
+                } else {
+                    updateGuides();
+                }
+            }, 500);
+        }
+
+        function finallizeCharacter() {
+            const targetCanvas = document.createElement('canvas');
+            targetCanvas.width = width;
+            targetCanvas.height = height;
+            const targetCtx = targetCanvas.getContext('2d');
+
+            targetCtx.font = "250px 'Jua', sans-serif";
+            targetCtx.textAlign = "center";
+            targetCtx.textBaseline = "middle";
+            targetCtx.fillStyle = "black";
+            targetCtx.fillText(currentSet[currentIndex].char, width / 2, height / 2);
+
+            const userImg = ctx.getImageData(0, 0, width, height).data;
+            const targetImg = targetCtx.getImageData(0, 0, width, height).data;
+
+            let targetPixels = 0;
+            let coveredPixels = 0;
+
+            for (let i = 3; i < targetImg.length; i += 4) {
+                if (targetImg[i] > 100) {
+                    targetPixels++;
+                    if (userImg[i] > 50) coveredPixels++;
+                }
+            }
+
+            const coverage = coveredPixels / targetPixels;
+            if (coverage > 0.3) {
+                showSuccess();
+            }
+        }
+
+        let autoAdvanceTimer = null;
+        function showSuccess() {
+            const data = currentSet[currentIndex];
+            const reward = data.rewards[Math.floor(Math.random() * data.rewards.length)];
+
+            rewardWordEl.innerText = reward.word;
+
+            rewardVisualEl.innerHTML = `<span class="reward-emoji">${reward.fallback}</span>`;
+
+            successOverlay.classList.add('show');
+            arrowLayer.innerHTML = "";
+            const existingNums = arrowLayer.parentNode.querySelectorAll('.stroke-number');
+            existingNums.forEach(e => e.remove());
+
+            const audio = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
+            // audio.play().catch(e => {});
+
+            // autoAdvanceTimer = setTimeout(() => {
+            //     nextChar();
+            // }, 3000);
+        }
+
+        function nextChar() {
+            if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
+            let next = currentIndex + 1;
+            if (next >= currentSet.length) next = 0;
+            setChar(next);
+            closeSuccess();
+        }
+
+        function closeSuccess() {
+            successOverlay.classList.remove('show');
+        }
+
+        // Initially render placeholders to avoid error before data injection?
+        // Actually, if I run `renderSelector` immediately and data is empty, it's fine.
+        // But I will inject data immediately.
+
+    </script>
+</body>
+
+</html>

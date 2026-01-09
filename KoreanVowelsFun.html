@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>그림과 함께하는 모음 놀이</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+
+        body {
+            font-family: 'Jua', sans-serif;
+            background-color: #fff3e0;
+            /* Light Orange theme */
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            overflow-y: auto;
+            touch-action: pan-y;
+        }
+
+        h1 {
+            color: #ef6c00;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #fff;
+            border: 2px solid #ff9800;
+            border-radius: 20px;
+            padding: 10px 15px;
+            text-decoration: none;
+            color: #ff9800;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            z-index: 1000;
+        }
+
+        .home-btn:hover {
+            transform: scale(1.05);
+            background: #ffe0b2;
+        }
+
+        .selector-container {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .char-btn {
+            background-color: #fff;
+            border: 2px solid #ffcc80;
+            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            font-family: 'Jua', sans-serif;
+            color: #e65100;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .char-btn:hover {
+            transform: scale(1.1);
+            background-color: #ffe0b2;
+        }
+
+        .char-btn.active {
+            background-color: #ff9800;
+            color: white;
+            border-color: #e65100;
+            transform: scale(1.15);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #canvas-container {
+            position: relative;
+            width: 300px;
+            height: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border: 8px solid #ffcc80;
+            overflow: hidden;
+            transform: scale(0.9);
+            transform-origin: center top;
+            margin-top: 40px;
+            margin-bottom: 50px;
+        }
+
+        #guide-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 250px;
+            color: #e0e0e0;
+            pointer-events: none;
+            user-select: none;
+            z-index: 1;
+        }
+
+        #arrow-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 3;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        .btn-action {
+            background-color: #ffb74d;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            font-family: 'Jua', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Success Message Overlay */
+        #success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        #success-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .success-content {
+            text-align: center;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .reward-image {
+            width: 250px;
+            height: 250px;
+            object-fit: contain;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.1));
+        }
+
+        .reward-emoji {
+            font-size: 150px;
+            line-height: 1.2;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .reward-word {
+            font-size: 4em;
+            color: #ef6c00;
+            text-shadow: 2px 2px 0px #fff, 4px 4px 0px #ffe0b2;
+            margin-bottom: 10px;
+        }
+
+        .success-text {
+            font-size: 2em;
+            color: #ffab00;
+            margin-bottom: 20px;
+        }
+
+        /* Arrow Styles */
+        .guide-arrow {
+            fill: none;
+            stroke: rgba(255, 152, 0, 0.6);
+            stroke-width: 5;
+            stroke-dasharray: 10 5;
+            marker-end: url(#arrowhead);
+            animation: dash 1s linear infinite;
+        }
+
+        .guide-arrow.active {
+            stroke: rgba(255, 152, 0, 1);
+            stroke-width: 7;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -15;
+            }
+        }
+
+        .stroke-number {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 152, 0, 0.9);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 4;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .stroke-number.active {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="index.html" class="home-btn">🏠 홈으로</a>
+    <h1>그림 모음 놀이</h1>
+
+    <div class="selector-container" id="selector"></div>
+
+    <div id="canvas-container">
+        <div id="guide-layer">ㅏ</div>
+        <svg id="arrow-layer" width="300" height="400">
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="rgba(255, 152, 0, 0.6)" />
+                </marker>
+            </defs>
+        </svg>
+        <canvas id="drawCanvas" width="300" height="400"></canvas>
+    </div>
+
+    <div class="controls">
+        <button class="btn-action" onclick="resetCanvas()">지우기 (다시하기)</button>
+    </div>
+
+    <div id="success-overlay">
+        <div class="success-content">
+            <div id="reward-visual"></div>
+            <div class="reward-word" id="reward-word">단어</div>
+            <div class="success-text">참 잘했어요!</div>
+            <button class="btn-action" style="background:#ff9800;" onclick="nextChar()">다음 글자!</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        const guideEl = document.getElementById('guide-layer');
+        const arrowLayer = document.getElementById('arrow-layer');
+        const successOverlay = document.getElementById('success-overlay');
+        const selectorContainer = document.getElementById('selector');
+        const rewardVisualEl = document.getElementById('reward-visual');
+        const rewardWordEl = document.getElementById('reward-word');
+
+        const width = 300;
+        const height = 400;
+
+        const vowels = [
+            {
+                char: 'ㅏ',
+                rewards: [
+                    { word: "아기", fallback: "👶" },
+                    { word: "아빠", fallback: "👨" },
+                    { word: "악어", fallback: "🐊" }
+                ],
+                strokes: [
+                    { path: "M 150 90 L 150 290", num: { x: 150, y: 90, text: "1" }, checkpoints: [{ x: 150, y: 90 }, { x: 150, y: 290 }] },
+                    { path: "M 150 190 L 230 190", num: { x: 160, y: 190, text: "2" }, checkpoints: [{ x: 150, y: 190 }, { x: 230, y: 190 }] }
+                ]
+            },
+            {
+                char: 'ㅑ',
+                rewards: [
+                    { word: "야구", fallback: "⚾" },
+                    { word: "양", fallback: "🐑" },
+                    { word: "약", fallback: "💊" }
+                ],
+                strokes: [
+                    { path: "M 130 90 L 130 290", num: { x: 130, y: 90, text: "1" }, checkpoints: [{ x: 130, y: 90 }, { x: 130, y: 290 }] },
+                    { path: "M 130 160 L 210 160", num: { x: 140, y: 160, text: "2" }, checkpoints: [{ x: 130, y: 160 }, { x: 210, y: 160 }] },
+                    { path: "M 130 220 L 210 220", num: { x: 140, y: 220, text: "3" }, checkpoints: [{ x: 130, y: 220 }, { x: 210, y: 220 }] }
+                ]
+            },
+            {
+                char: 'ㅓ',
+                rewards: [
+                    { word: "어머니", fallback: "👩" },
+                    { word: "얼굴", fallback: "😀" },
+                    { word: "어항", fallback: "🐟" }
+                ],
+                strokes: [
+                    { path: "M 80 190 L 160 190", num: { x: 80, y: 190, text: "1" }, checkpoints: [{ x: 80, y: 190 }, { x: 160, y: 190 }] },
+                    { path: "M 160 90 L 160 290", num: { x: 160, y: 90, text: "2" }, checkpoints: [{ x: 160, y: 90 }, { x: 160, y: 290 }] }
+                ]
+            },
+            {
+                char: 'ㅕ',
+                rewards: [
+                    { word: "여우", fallback: "🦊" },
+                    { word: "여자", fallback: "👧" },
+                    { word: "여름", fallback: "🏖️" }
+                ],
+                strokes: [
+                    { path: "M 90 160 L 170 160", num: { x: 90, y: 160, text: "1" }, checkpoints: [{ x: 90, y: 160 }, { x: 170, y: 160 }] },
+                    { path: "M 90 220 L 170 220", num: { x: 90, y: 220, text: "2" }, checkpoints: [{ x: 90, y: 220 }, { x: 170, y: 220 }] },
+                    { path: "M 170 90 L 170 290", num: { x: 170, y: 90, text: "3" }, checkpoints: [{ x: 170, y: 90 }, { x: 170, y: 290 }] }
+                ]
+            },
+            {
+                char: 'ㅗ',
+                rewards: [
+                    { word: "오리", fallback: "🦆" },
+                    { word: "오이", fallback: "🥒" },
+                    { word: "오렌지", fallback: "🍊" }
+                ],
+                strokes: [
+                    { path: "M 150 80 L 150 180", num: { x: 150, y: 80, text: "1" }, checkpoints: [{ x: 150, y: 80 }, { x: 150, y: 180 }] },
+                    { path: "M 70 180 L 230 180", num: { x: 70, y: 180, text: "2" }, checkpoints: [{ x: 70, y: 180 }, { x: 230, y: 180 }] }
+                ]
+            },
+            {
+                char: 'ㅛ',
+                rewards: [
+                    { word: "요리사", fallback: "👨‍🍳" },
+                    { word: "요트", fallback: "⛵" },
+                    { word: "요정", fallback: "🧚" }
+                ],
+                strokes: [
+                    { path: "M 110 80 L 110 180", num: { x: 110, y: 80, text: "1" }, checkpoints: [{ x: 110, y: 80 }, { x: 110, y: 180 }] },
+                    { path: "M 190 80 L 190 180", num: { x: 190, y: 80, text: "2" }, checkpoints: [{ x: 190, y: 80 }, { x: 190, y: 180 }] },
+                    { path: "M 70 180 L 230 180", num: { x: 70, y: 180, text: "3" }, checkpoints: [{ x: 70, y: 180 }, { x: 230, y: 180 }] }
+                ]
+            },
+            {
+                char: 'ㅜ',
+                rewards: [
+                    { word: "우유", fallback: "🥛" },
+                    { word: "우산", fallback: "☂️" },
+                    { word: "운동화", fallback: "👟" }
+                ],
+                strokes: [
+                    { path: "M 70 180 L 230 180", num: { x: 70, y: 180, text: "1" }, checkpoints: [{ x: 70, y: 180 }, { x: 230, y: 180 }] },
+                    { path: "M 150 180 L 150 300", num: { x: 150, y: 190, text: "2" }, checkpoints: [{ x: 150, y: 180 }, { x: 150, y: 300 }] }
+                ]
+            },
+            {
+                char: 'ㅠ',
+                rewards: [
+                    { word: "유리", fallback: "🪟" },
+                    { word: "유령", fallback: "👻" },
+                    { word: "유치원", fallback: "🏫" }
+                ],
+                strokes: [
+                    { path: "M 70 180 L 230 180", num: { x: 70, y: 180, text: "1" }, checkpoints: [{ x: 70, y: 180 }, { x: 230, y: 180 }] },
+                    { path: "M 110 180 L 110 300", num: { x: 110, y: 190, text: "2" }, checkpoints: [{ x: 110, y: 180 }, { x: 110, y: 300 }] },
+                    { path: "M 190 180 L 190 300", num: { x: 190, y: 190, text: "3" }, checkpoints: [{ x: 190, y: 180 }, { x: 190, y: 300 }] }
+                ]
+            },
+            {
+                char: 'ㅡ',
+                rewards: [
+                    { word: "으르렁", fallback: "🦁" },
+                    { word: "음식", fallback: "🍱" },
+                    { word: "음악", fallback: "🎵" }
+                ],
+                strokes: [
+                    { path: "M 60 190 L 240 190", num: { x: 60, y: 190, text: "1" }, checkpoints: [{ x: 60, y: 190 }, { x: 240, y: 190 }] }
+                ]
+            },
+            {
+                char: 'ㅣ',
+                rewards: [
+                    { word: "이", fallback: "🦷" },
+                    { word: "이불", fallback: "🛌" },
+                    { word: "이름", fallback: "📛" }
+                ],
+                strokes: [
+                    { path: "M 150 80 L 150 300", num: { x: 150, y: 80, text: "1" }, checkpoints: [{ x: 150, y: 80 }, { x: 150, y: 300 }] }
+                ]
+            }
+        ];
+
+        let currentIndex = 0;
+        let isDrawing = false;
+        let currentStrokeIndex = 0;
+        let strokePassedCheckpoints = [];
+
+        // Init Selector
+        const charList = vowels.map(v => v.char);
+        charList.forEach((c, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'char-btn';
+            btn.innerText = c;
+            btn.onclick = () => setChar(idx);
+            selectorContainer.appendChild(btn);
+        });
+
+        function setChar(index) {
+            currentIndex = index;
+            const char = charList[index];
+            guideEl.innerText = char;
+
+            document.querySelectorAll('.char-btn').forEach((b, i) => {
+                b.classList.toggle('active', i === index);
+            });
+
+            currentStrokeIndex = 0;
+            resetCanvas();
+            updateGuides();
+        }
+
+        function updateGuides() {
+            arrowLayer.innerHTML = `<defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="rgba(255, 152, 0, 0.6)" />
+                </marker>
+            </defs>`;
+            const existingNums = arrowLayer.parentNode.querySelectorAll('.stroke-number');
+            existingNums.forEach(e => e.remove());
+
+            const data = vowels[currentIndex];
+            if (!data || currentStrokeIndex >= data.strokes.length) return;
+
+            const stroke = data.strokes[currentStrokeIndex];
+
+            const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            pathEl.setAttribute("d", stroke.path);
+            pathEl.setAttribute("class", "guide-arrow active");
+            arrowLayer.appendChild(pathEl);
+
+            const numEl = document.createElement('div');
+            numEl.className = 'stroke-number active';
+            numEl.innerText = stroke.num.text;
+            numEl.style.left = stroke.num.x + 'px';
+            numEl.style.top = stroke.num.y + 'px';
+            arrowLayer.parentNode.appendChild(numEl);
+
+            strokePassedCheckpoints = new Array(stroke.checkpoints.length).fill(false);
+        }
+
+        ctx.strokeStyle = '#e65100'; // Dark Orange
+        ctx.lineWidth = 50;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        function startDraw(e) {
+            isDrawing = true;
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            validateCheckpoint(pos.x, pos.y);
+            e.preventDefault();
+        }
+
+        function moveDraw(e) {
+            if (!isDrawing) return;
+            const pos = getPos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            validateCheckpoint(pos.x, pos.y);
+            e.preventDefault();
+        }
+
+        function endDraw() {
+            isDrawing = false;
+        }
+
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', moveDraw);
+        window.addEventListener('mouseup', endDraw);
+        canvas.addEventListener('touchstart', startDraw, { passive: false });
+        canvas.addEventListener('touchmove', moveDraw, { passive: false });
+        canvas.addEventListener('touchend', endDraw);
+
+        function resetCanvas() {
+            ctx.clearRect(0, 0, width, height);
+            closeSuccess();
+            currentStrokeIndex = 0;
+            updateGuides();
+        }
+
+        function validateCheckpoint(x, y) {
+            const data = vowels[currentIndex];
+            if (!data || currentStrokeIndex >= data.strokes.length) return;
+
+            const stroke = data.strokes[currentStrokeIndex];
+            const checkpoints = stroke.checkpoints;
+
+            const nextIndex = strokePassedCheckpoints.indexOf(false);
+            if (nextIndex === -1) return;
+
+            const target = checkpoints[nextIndex];
+            const dist = Math.sqrt(Math.pow(x - target.x, 2) + Math.pow(y - target.y, 2));
+
+            if (dist < 65) {
+                strokePassedCheckpoints[nextIndex] = true;
+                if (strokePassedCheckpoints.every(p => p === true)) {
+                    completeStroke();
+                }
+            }
+        }
+
+        function completeStroke() {
+            setTimeout(() => {
+                currentStrokeIndex++;
+                const data = vowels[currentIndex];
+                if (currentStrokeIndex >= data.strokes.length) {
+                    finallizeCharacter();
+                } else {
+                    updateGuides();
+                }
+            }, 500);
+        }
+
+        function finallizeCharacter() {
+            const targetCanvas = document.createElement('canvas');
+            targetCanvas.width = width;
+            targetCanvas.height = height;
+            const targetCtx = targetCanvas.getContext('2d');
+
+            targetCtx.font = "250px 'Jua', sans-serif";
+            targetCtx.textAlign = "center";
+            targetCtx.textBaseline = "middle";
+            targetCtx.fillStyle = "black";
+            targetCtx.fillText(charList[currentIndex], width / 2, height / 2);
+
+            const userImg = ctx.getImageData(0, 0, width, height).data;
+            const targetImg = targetCtx.getImageData(0, 0, width, height).data;
+
+            let targetPixels = 0;
+            let coveredPixels = 0;
+
+            for (let i = 3; i < targetImg.length; i += 4) {
+                if (targetImg[i] > 100) {
+                    targetPixels++;
+                    if (userImg[i] > 50) coveredPixels++;
+                }
+            }
+
+            const coverage = coveredPixels / targetPixels;
+            if (coverage > 0.3) {
+                showSuccess();
+            }
+        }
+
+        let autoAdvanceTimer = null;
+        function showSuccess() {
+            const data = vowels[currentIndex];
+            // Randomly select one reward
+            const reward = data.rewards[Math.floor(Math.random() * data.rewards.length)];
+
+            rewardWordEl.innerText = reward.word;
+
+            rewardVisualEl.innerHTML = `<span class="reward-emoji">${reward.fallback}</span>`;
+
+            successOverlay.classList.add('show');
+            arrowLayer.innerHTML = "";
+            const existingNums = arrowLayer.parentNode.querySelectorAll('.stroke-number');
+            existingNums.forEach(e => e.remove());
+
+            const audio = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
+            // audio.play().catch(e => {});
+
+            // autoAdvanceTimer = setTimeout(() => {
+            //     nextChar();
+            // }, 3000);
+        }
+
+        function nextChar() {
+            if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
+            let next = currentIndex + 1;
+            if (next >= charList.length) next = 0;
+            setChar(next);
+            closeSuccess();
+        }
+
+        function closeSuccess() {
+            successOverlay.classList.remove('show');
+        }
+
+        setChar(0);
+
+    </script>
+</body>
+
+</html>

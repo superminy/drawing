@@ -3,55 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>자산 바코드 스캐너</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <title>고성능 자산 스캐너</title>
+    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        #reader { width: 100%; max-width: 500px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; }
-        #result { margin-top: 20px; padding: 15px; border: 1px solid #007bff; background: #e7f3ff; width: 100%; max-width: 500px; word-break: break-all; border-radius: 8px; display: none; }
-        h2 { color: #333; }
+        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; background: #f0f2f5; }
+        #interactive.viewport { position: relative; width: 100%; max-width: 640px; height: 400px; overflow: hidden; background: #000; }
+        #interactive.viewport > video, #interactive.viewport > canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+        /* 인식 중인 영역을 표시하는 녹색 박스 */
+        canvas.drawingBuffer { border: 2px solid transparent; }
+        .result-area { width: 90%; max-width: 600px; margin-top: 20px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .code-display { font-size: 1.5rem; font-weight: bold; color: #007bff; text-align: center; margin-top: 10px; }
+        .status { text-align: center; color: #666; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
-    <h2>자산 스캐너 테스트</h2>
-    <div id="reader"></div>
-    <div id="result">
-        <strong>스캔 결과:</strong> <span id="scan-text"></span>
+    <h2 style="margin: 20px 0;">자산 바코드 스캐너</h2>
+    
+    <div id="interactive" class="viewport"></div>
+
+    <div class="result-area">
+        <div class="status">바코드를 가로로 중앙에 맞춰주세요</div>
+        <div id="result" class="code-display">스캔 대기 중...</div>
     </div>
 
     <script>
-        function onScanSuccess(decodedText, decodedResult) {
-            // 스캔 성공 시 실행될 로직
-            document.getElementById('result').style.display = 'block';
-            document.getElementById('scan-text').innerText = decodedText;
-            console.log(`Scan result: ${decodedText}`, decodedResult);
-            
-            // 진동 피드백 (지원되는 기기에서)
-            if (navigator.vibrate) navigator.vibrate(200);
-        }
-
-        function onScanFailure(error) {
-            // 스캔 실패(바코드를 찾는 중) 시에는 로그를 남기지 않음 (성능 최적화)
-        }
-
-        let html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", 
-            { 
-                fps: 15, // 초당 프레임 수
-                qrbox: { width: 250, height: 150 }, // 스캔 가이드 영역
-                aspectRatio: 1.0 // 가로세로 비율
+        Quagga.init({
+            inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target: document.querySelector('#interactive'),
+                constraints: {
+                    width: { min: 1280 }, // 고해상도 설정으로 가로 바코드 세부 인식
+                    height: { min: 720 },
+                    facingMode: "environment", // 후면 카메라
+                    aspectRatio: { min: 1, max: 2 }
+                },
             },
-            // 아래 설정을 추가하여 후면 카메라와 자동 초점을 명시
-        videoConstraints: {
-            facingMode: "environment",
-            focusMode: "continuous", // 지속적 자동 초점
-            advanced: [{ zoom: 1.0 }] // 일부 기기에서 초점 개선 효과
-        }
-            /* verbose= */ false
-        );
-        
-        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            locator: {
+                patchSize: "medium", // 바코드 찾는 영역 크기 (가로 바코드는 medium/large 권장)
+                halfSample: true     // 인식 속도 향상
+            },
+            numOfWorkers: navigator.hardwareConcurrency || 4,
+            decoder: {
+                // 자산관리용으로 주로 쓰이는 규격만 지정 (인식률 급상승)
+                readers: ["code_128_reader", "code_39_reader", "ean_reader"]
+            },
+            locate: true
+        }, function(err) {
+            if (err) { console.error(err); return; }
+            Quagga.start();
+        });
+
+        // 실시간으로 바코드 위치에 선 그리기 (초점 가이드 역할)
+        Quagga.onProcessed(function(result) {
+            var drawingCtx = Quagga.canvas.ctx.overlay,
+                drawingCanvas = Quagga.canvas.dom.overlay;
+
+            if (result) {
+                if (result.boxes) {
+                    drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+                    result.boxes.filter(function (box) {
+                        return box !== result.box;
+                    }).forEach(function (box) {
+                        Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {color: "green", lineWidth: 2});
+                    });
+                }
+                if (result.box) {
+                    Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {color: "blue", lineWidth: 2});
+                }
+                if (result.codeResult && result.codeResult.code) {
+                    Quagga.ImageDebug.drawPath(result.line, {x: 'x', y: 'y'}, drawingCtx, {color: 'red', lineWidth: 3});
+                }
+            }
+        });
+
+        // 스캔 성공 시
+        Quagga.onDetected(function(result) {
+            const code = result.codeResult.code;
+            document.getElementById('result').innerText = code;
+            
+            // 진동 피드백
+            if (navigator.vibrate) navigator.vibrate(100);
+            
+            // 연속 스캔 방지를 위해 잠시 멈췄다 재개하는 로직 추가 가능
+        });
     </script>
 </body>
 </html>

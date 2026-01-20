@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자산 바코드 스캐너</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        #reader { width: 100%; max-width: 500px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; }
+        #result { margin-top: 20px; padding: 15px; border: 1px solid #007bff; background: #e7f3ff; width: 100%; max-width: 500px; word-break: break-all; border-radius: 8px; display: none; }
+        h2 { color: #333; }
+    </style>
+</head>
+<body>
+
+    <h2>자산 스캐너 테스트</h2>
+    <div id="reader"></div>
+    <div id="result">
+        <strong>스캔 결과:</strong> <span id="scan-text"></span>
+    </div>
+
+    <script>
+        function onScanSuccess(decodedText, decodedResult) {
+            // 스캔 성공 시 실행될 로직
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('scan-text').innerText = decodedText;
+            console.log(`Scan result: ${decodedText}`, decodedResult);
+            
+            // 진동 피드백 (지원되는 기기에서)
+            if (navigator.vibrate) navigator.vibrate(200);
+        }
+
+        function onScanFailure(error) {
+            // 스캔 실패(바코드를 찾는 중) 시에는 로그를 남기지 않음 (성능 최적화)
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", 
+            { 
+                fps: 15, // 초당 프레임 수
+                qrbox: { width: 250, height: 150 }, // 스캔 가이드 영역
+                aspectRatio: 1.0 // 가로세로 비율
+            },
+            /* verbose= */ false
+        );
+        
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    </script>
+</body>
+</html>

@@ -1,92 +1,46 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>고성능 자산 스캐너</title>
     <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; background: #f0f2f5; }
-        #interactive.viewport { position: relative; width: 100%; max-width: 640px; height: 400px; overflow: hidden; background: #000; }
-        #interactive.viewport > video, #interactive.viewport > canvas { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
-        /* 인식 중인 영역을 표시하는 녹색 박스 */
-        canvas.drawingBuffer { border: 2px solid transparent; }
-        .result-area { width: 90%; max-width: 600px; margin-top: 20px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .code-display { font-size: 1.5rem; font-weight: bold; color: #007bff; text-align: center; margin-top: 10px; }
-        .status { text-align: center; color: #666; font-size: 0.9rem; }
+        #interactive.viewport { width: 100%; max-width: 800px; height: 450px; position: relative; background: #000; margin: auto; }
+        #interactive.viewport > video, canvas { width: 100%; height: 100%; position: absolute; top: 0; left: 0; object-fit: cover; }
+        .guide-line { position: absolute; top: 50%; left: 10%; width: 80%; height: 2px; background: red; z-index: 10; opacity: 0.5; }
+        #result { text-align: center; font-size: 24px; font-weight: bold; margin-top: 20px; color: #007bff; }
     </style>
 </head>
 <body>
-
-    <h2 style="margin: 20px 0;">자산 바코드 스캐너</h2>
-    
-    <div id="interactive" class="viewport"></div>
-
-    <div class="result-area">
-        <div class="status">바코드를 가로로 중앙에 맞춰주세요</div>
-        <div id="result" class="code-display">스캔 대기 중...</div>
-    </div>
+    <div id="interactive" class="viewport">
+        <div class="guide-line"></div> </div>
+    <div id="result">가로 바코드를 빨간 선에 맞춰주세요</div>
 
     <script>
         Quagga.init({
             inputStream: {
-                name: "Live",
                 type: "LiveStream",
-                target: document.querySelector('#interactive'),
                 constraints: {
-                    width: { min: 1280 }, // 고해상도 설정으로 가로 바코드 세부 인식
-                    height: { min: 720 },
-                    facingMode: "environment", // 후면 카메라
-                    aspectRatio: { min: 1, max: 2 }
+                    width: { ideal: 1920 }, // 1D 바코드는 해상도가 생명입니다
+                    height: { ideal: 1080 },
+                    facingMode: "environment"
                 },
+                target: document.querySelector('#interactive')
             },
             locator: {
-                patchSize: "medium", // 바코드 찾는 영역 크기 (가로 바코드는 medium/large 권장)
-                halfSample: true     // 인식 속도 향상
+                patchSize: "large", // 긴 바코드를 찾기 위해 영역 확대
+                halfSample: false   // 정밀도를 위해 해상도 축소 안함 (중요!)
             },
-            numOfWorkers: navigator.hardwareConcurrency || 4,
             decoder: {
-                // 자산관리용으로 주로 쓰이는 규격만 지정 (인식률 급상승)
-                readers: ["code_128_reader", "code_39_reader", "ean_reader"]
+                readers: ["code_128_reader"] // 오직 CODE_128에만 집중
             },
             locate: true
         }, function(err) {
-            if (err) { console.error(err); return; }
+            if (err) return console.error(err);
             Quagga.start();
         });
 
-        // 실시간으로 바코드 위치에 선 그리기 (초점 가이드 역할)
-        Quagga.onProcessed(function(result) {
-            var drawingCtx = Quagga.canvas.ctx.overlay,
-                drawingCanvas = Quagga.canvas.dom.overlay;
-
-            if (result) {
-                if (result.boxes) {
-                    drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
-                    result.boxes.filter(function (box) {
-                        return box !== result.box;
-                    }).forEach(function (box) {
-                        Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {color: "green", lineWidth: 2});
-                    });
-                }
-                if (result.box) {
-                    Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {color: "blue", lineWidth: 2});
-                }
-                if (result.codeResult && result.codeResult.code) {
-                    Quagga.ImageDebug.drawPath(result.line, {x: 'x', y: 'y'}, drawingCtx, {color: 'red', lineWidth: 3});
-                }
-            }
-        });
-
-        // 스캔 성공 시
-        Quagga.onDetected(function(result) {
-            const code = result.codeResult.code;
-            document.getElementById('result').innerText = code;
-            
-            // 진동 피드백
-            if (navigator.vibrate) navigator.vibrate(100);
-            
-            // 연속 스캔 방지를 위해 잠시 멈췄다 재개하는 로직 추가 가능
+        Quagga.onDetected(function(data) {
+            document.getElementById('result').innerText = "스캔 완료: " + data.codeResult.code;
+            if (navigator.vibrate) navigator.vibrate(200);
         });
     </script>
 </body>

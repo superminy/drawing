@@ -42,6 +42,12 @@
                 qrbox: { width: 250, height: 150 }, // 스캔 가이드 영역
                 aspectRatio: 1.0 // 가로세로 비율
             },
+            // 아래 설정을 추가하여 후면 카메라와 자동 초점을 명시
+        videoConstraints: {
+            facingMode: "environment",
+            focusMode: "continuous", // 지속적 자동 초점
+            advanced: [{ zoom: 1.0 }] // 일부 기기에서 초점 개선 효과
+        }
             /* verbose= */ false
         );
         

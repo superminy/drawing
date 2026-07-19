@@ -41,10 +41,10 @@
         .right-menu {
             display: flex;
             gap: 15px;
-            background: rgba(255, 255, 255, 0.6);
-            padding: 15px;
+            background: rgba(255, 255, 255, 0.75);
+            padding: 18px;
             border-radius: 25px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
             flex-shrink: 0;
         }
         .menu-column {
@@ -52,11 +52,24 @@
             flex-direction: column;
             gap: 10px;
         }
-        .column-title { font-size: 13px; font-weight: bold; color: #666; margin-bottom: 2px; }
+        .column-title { font-size: 13px; font-weight: bold; color: #555; margin-bottom: 2px; }
+
+        /* ⭐️ 스티커가 많아져서 정렬해주는 예쁜 그리드 슬롯 */
+        .sticker-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            max-height: 360px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        /* 스티커 스크롤바 디자인 */
+        .sticker-grid::-webkit-scrollbar { width: 6px; }
+        .sticker-grid::-webkit-scrollbar-thumb { background: #ffb6c1; border-radius: 10px; }
 
         .btn {
-            width: 60px;
-            height: 60px;
+            width: 58px;
+            height: 58px;
             border-radius: 50%;
             border: 3px solid white;
             background-color: white;
@@ -70,7 +83,7 @@
         }
         .btn.active {
             border-color: #e84393;
-            transform: scale(1.1);
+            transform: scale(1.08);
             background-color: #fff0f6;
         }
 
@@ -80,6 +93,7 @@
         }
         .sticker-item:active { cursor: grabbing; }
 
+        /* 화면을 밀고 가는 드래그 이모지 */
         .drag-ghost {
             position: fixed;
             pointer-events: none;
@@ -101,18 +115,19 @@
         .slider-box span { font-size: 11px; font-weight: bold; color: #555; }
         .size-slider { width: 15px; height: 90px; writing-mode: vertical-lr; direction: rtl; accent-color: #e84393; cursor: pointer; }
 
-        /* 중앙 아틀리에 판 */
+        /* 👑 중앙 도화지 판: 왜곡 없는 1:1 고정 구조 */
         .artboard {
             position: relative;
             width: 450px;
             height: 550px;
             border-radius: 30px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
             overflow: hidden;
             flex-shrink: 0; 
+            background-color: #f3edf5;
         }
         
-        /* 👑 핵심 변경: 캔버스 자체를 손톱 모양 곡선으로 클리핑 & 기본 매니큐어 색상 지정 */
+        /* [하단 레이어] 순수 캔버스 (기본 손톱색 탑재) */
         #paintCanvas {
             position: absolute;
             top: 0;
@@ -120,12 +135,11 @@
             z-index: 1;
             width: 100%;
             height: 100%;
-            clip-path: path('M 150 140 C 150 100, 300 100, 300 140 L 285 380 C 285 410, 165 410, 165 380 Z');
             background: radial-gradient(circle, #ffffff, #f7d6e0);
-            transition: background 0.2s ease;
+            transition: background 0.25s ease;
         }
         
-        /* 손가락 레이어 오버레이 */
+        /* [상단 오버레이 레이어] 마스크 구멍이 뚫린 진짜 손가락 가림막 */
         .finger-overlay {
             position: absolute;
             top: 0;
@@ -133,7 +147,7 @@
             z-index: 2;
             width: 100%;
             height: 100%;
-            pointer-events: none;
+            pointer-events: none; /* 터치가 아래 캔버스로 다이렉트 통과 */
         }
 
         @media (max-width: 768px) {
@@ -142,13 +156,14 @@
             .left-menu { flex-direction: row; width: 450px; justify-content: space-between; }
             .slider-box { flex-direction: row; height: 44px; padding: 0 15px; border-radius: 25px; }
             .size-slider { writing-mode: horizontal-tb; width: 80px; height: 15px; }
-            .right-menu { flex-direction: row; width: 420px; justify-content: space-around; }
+            .right-menu { flex-direction: column; width: 420px; }
+            .sticker-grid { grid-template-columns: repeat(7, 1fr); max-height: none; }
         }
     </style>
 </head>
 <body>
 
-    <h2>💅 리얼 손가락 손톱 꾸미기 놀이</h2>
+    <h2>💅 반짝반짝 투명 마스크 네일아트</h2>
 
     <div class="game-container">
         <!-- 왼쪽 메뉴 -->
@@ -160,29 +175,36 @@
             
             <div class="slider-box">
                 <span>크기</span>
-                <input type="range" id="penSize" class="size-slider" min="15" max="60" value="30" oninput="updateSize(this.value)">
+                <input type="range" id="penSize" class="size-slider" min="15" max="60" value="35" oninput="updateSize(this.value)">
             </div>
         </div>
 
         <!-- 중앙 도화지판 -->
         <div class="artboard">
-            <!-- 그림이 그려질 손톱 캔버스 -->
             <canvas id="paintCanvas" width="450" height="550"></canvas>
             
-            <!-- 👑 진짜 손가락 실루엣과 관절 주름을 표현한 SVG 오버레이 -->
+            <!-- 👑 완벽한 좌표 일치와 바탕색 연출을 위한 최신 SVG 마스크 레이어 -->
             <svg class="finger-overlay" viewBox="0 0 450 550">
-                <!-- 네일숍 테이블 배경색 -->
-                <rect width="450" height="550" fill="#f5f0f6" />
+                <defs>
+                    <!-- 마스크 선언: 흰색은 화면을 채우고, 검은색(손톱 모양) 영역만 아래 캔버스를 투명하게 보여줌 -->
+                    <mask id="nail-hole">
+                        <rect width="450" height="550" fill="white" />
+                        <path d="M 155 130 C 155 85, 295 85, 295 130 L 280 380 C 280 405, 170 405, 170 380 Z" fill="black" />
+                    </mask>
+                </defs>
                 
-                <!-- 예쁜 피부톤의 손가락 입체 모양 (손톱 부위만 구멍 뚫기 적용) -->
-                <path d="M 0 0 H 450 V 550 H 0 Z 
-                         M 90 550 L 110 120 C 110 30, 340 30, 340 120 L 360 550 Z" 
-                      fill="#fbc5b1" fill-rule: evenodd stroke="#e09985" stroke-width="2"/>
+                <!-- 손톱 구멍이 뻥 뚫리는 그래픽 그룹 -->
+                <g mask="url(#nail-hole)">
+                    <!-- 네일 테이블 바닥 배경 -->
+                    <rect width="450" height="550" fill="#f3edf5" />
+                    <!-- 진짜 예쁜 손가락 피부 모양 -->
+                    <path d="M 75 550 L 110 110 C 110 25, 340 25, 340 110 L 375 550 Z" fill="#fbc5b1" stroke="#e09985" stroke-width="2"/>
+                </g>
                 
-                <!-- 손가락 디테일 묘사 (손톱 밑 큐티클 선 및 마디 주름) -->
-                <path d="M 162 385 C 162 412, 288 412, 288 385" fill="none" stroke="#d18671" stroke-width="3" stroke-linecap="round" />
-                <path d="M 115 480 C 165 490, 285 490, 335 480" fill="none" stroke="#e09985" stroke-width="2.5" stroke-linecap="round" />
-                <path d="M 120 492 C 170 502, 280 502, 330 492" fill="none" stroke="#e09985" stroke-width="2" stroke-linecap="round" />
+                <!-- 구멍 뚫린 가장자리를 깔끔하게 마감해주는 실감나는 큐티클 라인 및 마디 주름 -->
+                <path d="M 170 380 C 170 405, 280 405, 280 380" fill="none" stroke="#d18671" stroke-width="3" stroke-linecap="round" />
+                <path d="M 115 475 C 165 485, 285 485, 335 475" fill="none" stroke="#e09985" stroke-width="2" stroke-linecap="round" />
+                <path d="M 120 487 C 170 497, 280 497, 330 487" fill="none" stroke="#e09985" stroke-width="1.5" stroke-linecap="round" />
             </svg>
         </div>
 
@@ -192,18 +214,30 @@
                 <span class="column-title">바탕색</span>
                 <button class="btn" style="background: #e84393;" onclick="fillPattern('color', '#e84393')"></button>
                 <button class="btn" style="background: #9b59b6;" onclick="fillPattern('color', '#9b59b6')"></button>
-                <button class="btn" style="background: linear-gradient(to right, #ff7675, #ffeaa7, #74b9ff);" onclick="fillPattern('rainbow')">🌈</button>
+                <button class="btn" style="background: linear-gradient(to bottom, #ff7675, #ffeaa7, #74b9ff);" onclick="fillPattern('rainbow')">🌈</button>
                 <button class="btn" style="background: radial-gradient(#fff 20%, #fd79a8 21%) 0 0 / 14px 14px;" onclick="fillPattern('dots')">🔮</button>
                 <button class="btn" style="background: #fff; font-size:15px; font-weight:bold;" onclick="fillPattern('clear')">지움</button>
             </div>
             
             <div class="menu-column">
-                <span class="column-title">스티커</span>
-                <div class="btn sticker-item" onpointerdown="startDrag(event, '🐸')">🐸</div>
-                <div class="btn sticker-item" onpointerdown="startDrag(event, '🦁')">🦁</div>
-                <div class="btn sticker-item" onpointerdown="startDrag(event, '🐰')">🐰</div>
-                <div class="btn sticker-item" onpointerdown="startDrag(event, '🐼')">🐼</div>
-                <div class="btn sticker-item" onpointerdown="startDrag(event, '🧁')">🧁</div>
+                <span class="column-title">스티커 (총 14종)</span>
+                <!-- 👑 스티커 대폭 추가 및 그리드 배치 -->
+                <div class="sticker-grid">
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '💖')">💖</div>
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '⭐')">⭐</div>
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🎀')">🎀</div>
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '💎')">💎</div>
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '👑')">👑</div>
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🦄')">🦄</div>
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🍒')">🍒</div>
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🐰')">🐰</div>
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🐼')">🐼</div>
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🐱')">🐱</div>
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🦁')">🦁</div>
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🐸')">🐸</div>
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🧁')">🧁</div>
+                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🌼')">🌼</div>
+                </div>
             </div>
         </div>
     </div>
@@ -228,6 +262,7 @@
         ctx.lineWidth = sizeInput.value;
         ctx.strokeStyle = currentColor;
 
+        // 1:1 완벽 보정 캔버스 터치 매핑 함수
         function getCanvasCoords(clientX, clientY) {
             const rect = canvas.getBoundingClientRect();
             return {
@@ -273,7 +308,7 @@
             ctx.lineWidth = value;
         }
 
-        // 👑 핵심 변경 2: 캔버스 배경 스타일을 직접 조작하여 지우개 버그 차단
+        // 👑 이제 마스크 구멍 아래에서 캔버스 배경이 직접 바뀌므로 지우개 버그 완벽 차단!
         function fillPattern(type, arg = '') {
             if (type === 'color') {
                 canvas.style.background = arg;
@@ -302,8 +337,8 @@
             dragGhost.className = 'drag-ghost';
             dragGhost.innerText = sticker;
             
-            // 👑 크기 배율 감소 (1.8 -> 1.1)로 귀여운 미니 크기 연출
-            const size = parseInt(sizeInput.value) * 1.1;
+            // 👑 스티커 크기 배율 대폭 하향 보정 (0.75 배수) -> 작고 귀엽게 들어감
+            const size = parseInt(sizeInput.value) * 0.75;
             dragGhost.style.fontSize = `${size}px`;
             dragGhost.style.left = `${e.clientX}px`;
             dragGhost.style.top = `${e.clientY}px`;
@@ -320,7 +355,7 @@
             dragGhost.style.top = `${e.clientY}px`;
         }
 
-        // 드롭
+        // 드롭 안착 (정밀 타격)
         function onDrop(e) {
             if (!dragGhost) return;
             
@@ -334,8 +369,8 @@
                 saveState();
                 ctx.globalCompositeOperation = 'source-over';
                 
-                // 안착 스티커 크기도 축소 적용
-                ctx.font = `${parseInt(sizeInput.value) * 1.1}px 'Malgun Gothic'`;
+                // 안착 스티커 크기 축소 반영
+                ctx.font = `${parseInt(sizeInput.value) * 0.75}px 'Malgun Gothic'`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(draggedSticker, coords.x, coords.y);
@@ -347,7 +382,7 @@
             window.removeEventListener('pointerup', onDrop);
         }
 
-        // 그리기
+        // 드로잉
         canvas.addEventListener('pointerdown', (e) => {
             saveState();
             isDrawing = true;

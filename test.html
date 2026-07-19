@@ -3,148 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>우리아이 프리미엄 이모지 색칠놀이</title>
+    <title>반짝반짝 네일아트 놀이 (드래그앤드롭)</title>
     <style>
-        /* 기본 레이아웃 및 태블릿 제스처 방지 */
         body { 
             text-align: center; 
             font-family: 'Malgun Gothic', sans-serif; 
-            background-color: #f0f4f8; 
+            background: linear-gradient(135deg, #ffeaa7, #ffc0cb); 
             margin: 0; 
-            padding: 15px; 
+            padding: 10px; 
             touch-action: none; 
+            user-select: none;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h2 { margin: 0 0 10px 0; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.15); font-size: 26px; }
+
+        .game-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .left-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .right-menu {
+            display: flex;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 15px;
+            border-radius: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+        .menu-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .column-title { font-size: 12px; font-weight: bold; color: #666; margin-bottom: 2px; }
+
+        .btn {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: 3px solid white;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+        .btn.active {
+            border-color: #e84393;
+            transform: scale(1.1);
+            background-color: #fff0f6;
+        }
+
+        /* 드래그할 스티커 마우스 커서 및 스타일 */
+        .sticker-item {
+            cursor: grab;
+            touch-action: none; /* 브라우저 자체 스크롤 방지 */
+        }
+        .sticker-item:active { cursor: grabbing; }
+
+        /* ⭐️ 드래그할 때 마우스/펜 끝에 따라다닐 유령 이모지 스타일 */
+        .drag-ghost {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
             user-select: none;
         }
 
-        h2 { margin: 5px 0 15px 0; color: #2c3e50; font-size: 26px; text-shadow: 1px 1px 2px rgba(0,0,0,0.05); }
-
-        /* 1. 상단 이모지 도안 선택 바 */
-        .emoji-selector {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            background: white;
-            padding: 10px 20px;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-            max-width: 550px;
-            margin: 0 auto 20px auto;
-        }
-        .emoji-btn {
-            font-size: 32px;
-            background: none;
-            border: 3px solid transparent;
-            border-radius: 50%;
-            cursor: pointer;
-            padding: 4px;
-            transition: all 0.2s ease;
-        }
-        .emoji-btn.active {
-            border-color: #ff7675;
-            background-color: #ffeaa7;
-            transform: scale(1.15);
-        }
-
-        /* 2. 상단 컨트롤러 (도구, 굵기, 클릭형 팔레트) */
-        .controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            position: relative;
-        }
-
-        .action-btn {
-            height: 50px;
-            padding: 0 15px;
-            border-radius: 25px;
-            border: 3px solid white;
-            background-color: #dfe6e9;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.08);
-            font-size: 15px;
-            font-weight: bold;
-            color: #2d3436;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-        }
-        .action-btn.active {
-            border-color: #2c3e50;
-            background-color: #b2bec3;
-        }
-
-        /* 👑 열고 닫히는 대용량 팔레트 스타일 */
-        .palette-dropdown-container { position: relative; }
-        
-        .current-color-box {
-            width: 120px;
-            height: 50px;
-            border-radius: 25px;
-            border: 3px solid white;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.08);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
-            transition: transform 0.2s;
-        }
-        
-        .color-drawer {
-            display: none; /* 기본은 숨김 */
-            position: absolute;
-            top: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 15px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            z-index: 10;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 10px;
-            width: 260px;
-        }
-        .color-drawer.open { display: grid; } /* 클릭 시 격자무늬 오픈 */
-        
-        .color-chip {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            border: 2px solid #eee;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-        .color-chip:active { transform: scale(0.9); }
-
-        /* 두께 조절 슬라이더 */
         .slider-box {
-            display: flex;
-            align-items: center;
-            gap: 8px;
             background: white;
-            padding: 5px 15px;
-            border-radius: 25px;
-            height: 40px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 8px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
-        .size-slider { width: 100px; height: 8px; cursor: pointer; accent-color: #ff7675; }
+        .slider-box span { font-size: 11px; font-weight: bold; color: #555; }
+        .size-slider { width: 15px; height: 80px; writing-mode: vertical-lr; direction: rtl; accent-color: #e84393; cursor: pointer; }
 
-        /* 3. 메인 스케치북 (550x550으로 더 크게 세팅) */
         .artboard {
             position: relative;
-            width: 550px;
+            width: 450px;
             height: 550px;
-            margin: 0 auto;
-            background: white;
+            background: radial-gradient(circle, #ffffff, #f7d6e0);
             border-radius: 30px;
-            box-shadow: 0 12px 35px rgba(0,0,0,0.08);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
             overflow: hidden;
         }
         
@@ -157,230 +120,233 @@
             height: 100%;
         }
         
-        .drawing-outline {
+        .finger-overlay {
             position: absolute;
             top: 0;
             left: 0;
             z-index: 2;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* ⭐️ 펜 터치 관통 */
+            pointer-events: none;
         }
-        .drawing-outline path, .drawing-outline circle {
-            fill: none;
-            stroke: #1e272e;
-            stroke-width: 5;
-            stroke-linecap: round;
-            stroke-linejoin: round;
+        .finger-overlay path {
+            fill: #fbc5b1;
+            fill-rule: evenodd;
+            stroke: #e09985;
+            stroke-width: 3;
         }
     </style>
 </head>
 <body>
 
-    <h2>🎨 프리미엄 이모지 색칠놀이</h2>
+    <h2>💅 끌어다 붙이는 반짝반짝 네일아트</h2>
 
-    <!-- 이모지 선택 메뉴 (더 다채로워진 라인업) -->
-    <div class="emoji-selector">
-        <button class="emoji-btn active" onclick="loadDesign('chick', this)">🐥</button>
-        <button class="emoji-btn" onclick="loadDesign('cat', this)">🐱</button>
-        <button class="emoji-btn" onclick="loadDesign('rocket', this)">🚀</button>
-        <button class="emoji-btn" onclick="loadDesign('dino', this)">Rex</button>
-        <button class="emoji-btn" onclick="loadDesign('castle', this)">🏰</button>
-    </div>
-
-    <!-- 제어 도구 모음 -->
-    <div class="controls">
-        <!-- 클릭하면 열리는 대용량 팔레트 -->
-        <div class="palette-dropdown-container">
-            <div id="currentColorBtn" class="current-color-box" style="background-color: #ff7675;" onclick="togglePalette()">
-                색상 고르기 🎨
-            </div>
-            <!-- 24가지의 풍부한 아동용 컬러칩 모음 -->
-            <div id="colorDrawer" class="color-drawer">
-                <!-- Reds / Pinks -->
-                <div class="color-chip" style="background: #ff7675;" onclick="selectColor('#ff7675')"></div>
-                <div class="color-chip" style="background: #ef5777;" onclick="selectColor('#ef5777')"></div>
-                <div class="color-chip" style="background: #f78fb3;" onclick="selectColor('#f78fb3')"></div>
-                <div class="color-chip" style="background: #ffb8b8;" onclick="selectColor('#ffb8b8')"></div>
-                <!-- Oranges / Yellows -->
-                <div class="color-chip" style="background: #ff9f43;" onclick="selectColor('#ff9f43')"></div>
-                <div class="color-chip" style="background: #f1c40f;" onclick="selectColor('#f1c40f')"></div>
-                <div class="color-chip" style="background: #ffeaa7;" onclick="selectColor('#ffeaa7')"></div>
-                <div class="color-chip" style="background: #feca57;" onclick="selectColor('#feca57')"></div>
-                <!-- Greens -->
-                <div class="color-chip" style="background: #1dd1a1;" onclick="selectColor('#1dd1a1')"></div>
-                <div class="color-chip" style="background: #10ac84;" onclick="selectColor('#10ac84')"></div>
-                <div class="color-chip" style="background: #78e08f;" onclick="selectColor('#78e08f')"></div>
-                <div class="color-chip" style="background: #95afc0;" onclick="selectColor('#95afc0')"></div>
-                <!-- Blues -->
-                <div class="color-chip" style="background: #74b9ff;" onclick="selectColor('#74b9ff')"></div>
-                <div class="color-chip" style="background: #0984e3;" onclick="selectColor('#0984e3')"></div>
-                <div class="color-chip" style="background: #00cec9;" onclick="selectColor('#00cec9')"></div>
-                <div class="color-chip" style="background: #341f97;" onclick="selectColor('#341f97')"></div>
-                <!-- Purples / Browns -->
-                <div class="color-chip" style="background: #a29bfe;" onclick="selectColor('#a29bfe')"></div>
-                <div class="color-chip" style="background: #6c5ce7;" onclick="selectColor('#6c5ce7')"></div>
-                <div class="color-chip" style="background: #e66767;" onclick="selectColor('#e66767')"></div>
-                <div class="color-chip" style="background: #cf6a87;" onclick="selectColor('#cf6a87')"></div>
-                <!-- Darks -->
-                <div class="color-chip" style="background: #f5f6fa;" onclick="selectColor('#f5f6fa')"></div>
-                <div class="color-chip" style="background: #7f8c8d;" onclick="selectColor('#7f8c8d')"></div>
-                <div class="color-chip" style="background: #2c3e50;" onclick="selectColor('#2c3e50')"></div>
-                <div class="color-chip" style="background: #1e272e;" onclick="selectColor('#1e272e')"></div>
+    <div class="game-container">
+        <!-- 왼쪽 메뉴 -->
+        <div class="left-menu">
+            <button class="btn" style="background-color: #ff7675; color: white; font-size: 18px;" onclick="undo()">↩️</button>
+            <button class="btn" style="background-color: #ffeaa7;" onclick="clearAll()">🗑️</button>
+            <hr style="width:80%; border:1px solid #ccc; margin: 5px 0;">
+            <button id="tool-pen" class="btn active" onclick="setMode('pen')">✏️</button>
+            <button id="tool-eraser" class="btn" onclick="setMode('eraser')">🧼</button>
+            
+            <div class="slider-box">
+                <span>크기</span>
+                <input type="range" id="penSize" class="size-slider" min="5" max="60" value="20" oninput="updateSize(this.value)">
             </div>
         </div>
 
-        <!-- 펜 / 지우개 / 비우기 모드 -->
-        <button id="penBtn" class="action-btn active" onclick="setMode('pen')">✏️ 붓</button>
-        <button id="eraserBtn" class="action-btn" onclick="setMode('eraser')">🧼 지우개</button>
-        <button class="action-btn" style="background-color: #ffcb74;" onclick="clearAll()">🗑️ 전체 리셋</button>
-        
-        <!-- 굵기 조절 -->
-        <div class="slider-box">
-            <span style="font-size:13px; font-weight:bold;">두께</span>
-            <input type="range" id="penSize" class="size-slider" min="5" max="70" value="20" oninput="updateSize(this.value)">
+        <!-- 중앙 도화지판 -->
+        <div class="artboard">
+            <canvas id="paintCanvas" width="450" height="550"></canvas>
+            <svg class="finger-overlay" viewBox="0 0 450 550">
+                <path d="M 0 0 H 450 V 550 H 0 Z 
+                         M 160 180 C 160 140, 290 140, 290 180 V 440 C 290 460, 160 460, 160 440 Z" />
+            </svg>
         </div>
-    </div>
 
-    <!-- 메인 도화지판 -->
-    <div class="artboard">
-        <canvas id="paintCanvas" width="550" height="550"></canvas>
-        <svg class="drawing-outline" viewBox="0 0 200 200">
-            <!-- 자바스크립트로 정밀 디자인 코드가 주입되는 그룹 태그 -->
-            <g id="outlineGroup"></g>
-        </svg>
+        <!-- 오른쪽 메뉴: 매니큐어 베이스 및 드래그용 스티커 -->
+        <div class="right-menu">
+            <div class="menu-column">
+                <span class="column-title">바탕색</span>
+                <button class="btn" style="background: #e84393;" onclick="fillPattern('color', '#e84393')"></button>
+                <button class="btn" style="background: #9b59b6;" onclick="fillPattern('color', '#9b59b6')"></button>
+                <button class="btn" style="background: linear-gradient(to right, #ff7675, #ffeaa7, #74b9ff);" onclick="fillPattern('rainbow')">🌈</button>
+                <button class="btn" style="background: radial-gradient(#fff 20%, #fd79a8 21%); background-size: 10px 10px;" onclick="fillPattern('dots')">🔮</button>
+                <button class="btn" style="background: #fff; font-size:16px; font-weight:bold;" onclick="fillPattern('color', '#ffffff')">지움</button>
+            </div>
+            
+            <!-- ⭐️ 스티커 영역: onpointerdown 이벤트로 드래그 트리거 -->
+            <div class="menu-column">
+                <span class="column-title">스티커</span>
+                <div class="btn sticker-item" onpointerdown="startDrag(event, '🐸')">🐸</div>
+                <div class="btn sticker-item" onpointerdown="startDrag(event, '🦁')">🦁</div>
+                <div class="btn sticker-item" onpointerdown="startDrag(event, '🐰')">🐰</div>
+                <div class="btn sticker-item" onpointerdown="startDrag(event, '🐼')">🐼</div>
+                <div class="btn sticker-item" onpointerdown="startDrag(event, '🧁')">🧁</div>
+            </div>
+        </div>
     </div>
 
     <script>
         const canvas = document.getElementById('paintCanvas');
         const ctx = canvas.getContext('2d');
         const sizeInput = document.getElementById('penSize');
-        const outlineGroup = document.getElementById('outlineGroup');
-        const colorDrawer = document.getElementById('colorDrawer');
-        const currentColorBtn = document.getElementById('currentColorBtn');
         
         let isDrawing = false;
-        let currentMode = 'pen'; // 'pen' 또는 'eraser'
-        let currentColor = '#ff7675';
+        let currentMode = 'pen'; 
+        let currentColor = '#e84393';
+        
+        let undoStack = [];
+        const maxUndo = 15;
 
-        // 🦖 고해상도 다중 경로(Complex Multi-path) 이모지 도안 세트
-        const complexDesigns = {
-            chick: `
-                <!-- 몸통과 얼굴 -->
-                <path d="M 100 40 C 60 40, 50 80, 50 110 C 50 150, 150 150, 150 110 C 150 80, 140 40, 100 40 Z" />
-                <!-- 눈자위 및 눈동자 -->
-                <circle cx="82" cy="85" r="5" fill="#1e272e" />
-                <circle cx="118" cy="85" r="5" fill="#1e272e" />
-                <!-- 귀여운 부리 -->
-                <path d="M 92 95 L 108 95 L 100 110 Z" />
-                <!-- 아기 날개 -->
-                <path d="M 50 115 Q 25 110, 45 130 M 150 115 Q 175 110, 155 130" />
-                <!-- 닭발 부위 -->
-                <path d="M 80 148 L 80 165 M 72 165 L 88 165 M 120 148 L 120 165 M 112 165 L 128 165" />
-            `,
-            cat: `
-                <!-- 귀와 얼굴 윤곽 -->
-                <path d="M 50 95 C 30 135, 170 135, 150 95 C 162 55, 140 45, 140 45 L 118 72 L 82 72 L 60 45 C 60 45, 38 55, 50 95 Z" />
-                <!-- 안쪽 귀 디테일 -->
-                <path d="M 64 54 L 75 72 M 136 54 L 125 72" stroke-width="3" />
-                <!-- 눈과 입 수염 -->
-                <circle cx="78" cy="95" r="4" fill="#1e272e" />
-                <circle cx="122" cy="95" r="4" fill="#1e272e" />
-                <path d="M 94 106 L 106 106 L 100 112 Z" fill="#1e272e" />
-                <path d="M 100 112 Q 100 120, 92 120 M 100 112 Q 100 120, 108 120" />
-                <path d="M 42 105 L 20 102 M 42 112 L 15 112 M 158 105 L 180 102 M 158 112 L 185 112" stroke-width="3" />
-            `,
-            rocket: `
-                <!-- 로켓 본체 -->
-                <path d="M 100 20 C 122 55, 130 85, 130 140 L 70 140 C 70 85, 78 55, 100 20 Z" />
-                <!-- 창문 구멍 -->
-                <circle cx="100" cy="75" r="16" />
-                <circle cx="100" cy="75" r="10" stroke-width="2" />
-                <!-- 양옆 날개 기둥 -->
-                <path d="M 70 110 L 40 145 L 70 140 M 130 110 L 160 145 L 130 140" />
-                <!-- 분출구 화염 효과 -->
-                <path d="M 80 140 L 75 168 L 90 152 L 100 178 L 110 152 L 125 168 L 120 140" />
-            `,
-            dino: `
-                <!-- 아기공룡 전체 실루엣 -->
-                <path d="M 45 65 C 45 35, 95 32, 100 55 C 105 75, 85 95, 92 115 C 112 122, 150 112, 172 142 C 182 158, 152 165, 130 162 L 75 162 C 52 162, 32 135, 38 102 C 38 85, 45 72, 45 65 Z" />
-                <!-- 튼튼한 앞발 뒷발 -->
-                <path d="M 78 162 L 78 182 L 94 182 L 94 162 M 112 162 L 112 182 L 128 182 L 128 162" />
-                <!-- 공룡 눈과 등뿔 가시 조각 -->
-                <circle cx="65" cy="50" r="4" fill="#1e272e" />
-                <path d="M 98 60 L 108 55 L 96 72 L 106 68 L 91 82 M 65 105 Q 75 110, 72 118" />
-            `,
-            castle: `
-                <!-- 중세 성의 외곽 기둥과 성벽 구조 -->
-                <path d="M 35 165 L 35 95 L 55 95 L 55 65 L 72 65 L 72 45 L 62 45 L 80 15 L 98 45 L 88 45 L 88 65 L 112 65 L 112 45 L 102 45 L 120 15 L 138 45 L 128 45 L 128 65 L 145 65 L 145 95 L 165 95 L 165 165 Z" />
-                <!-- 아치형 성문 출입구 -->
-                <path d="M 82 165 L 82 130 C 82 115, 118 115, 118 130 L 118 165" />
-                <!-- 성벽 격자 창문들 -->
-                <path d="M 42 110 H 48 V 125 H 42 Z M 152 110 H 158 V 125 H 152 Z" />
-                <path d="M 95 85 H 105 V 100 H 95 Z" />
-            `
-        };
+        // 드래그앤드롭 전용 변수
+        let dragGhost = null;
+        let draggedSticker = '';
 
-        // 초기 도안 세팅
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.lineWidth = sizeInput.value;
-        outlineGroup.innerHTML = complexDesigns.chick;
+        ctx.strokeStyle = currentColor;
 
-        // 👑 대용량 팔레트 열고 닫기 토글 함수
-        function togglePalette() {
-            colorDrawer.classList.toggle('open');
+        function saveState() {
+            if (undoStack.length >= maxUndo) undoStack.shift();
+            undoStack.push(canvas.toDataURL());
         }
 
-        // 색상 선택 처리 함수
-        function selectColor(color) {
-            currentColor = color;
-            currentColorBtn.style.backgroundColor = color; // 버튼 배경색 즉시 피드백
-            colorDrawer.classList.remove('open'); // 선택 시 드롭다운 닫기
-            setMode('pen'); // 색상을 고르면 자동으로 붓 모드로 복귀
+        function undo() {
+            if (undoStack.length === 0) return;
+            let previousState = undoStack.pop();
+            let img = new Image();
+            img.src = previousState;
+            img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+            };
         }
 
-        // 펜 굵기 실시간 업데이트
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('tool-pen').classList.remove('active');
+            document.getElementById('tool-eraser').classList.remove('active');
+            
+            if (mode === 'pen') {
+                document.getElementById('tool-pen').classList.add('active');
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = sizeInput.value;
+            } else if (mode === 'eraser') {
+                document.getElementById('tool-eraser').classList.add('active');
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.lineWidth = Math.max(parseInt(sizeInput.value), 25);
+            }
+        }
+
         function updateSize(value) {
             ctx.lineWidth = value;
         }
 
-        // 펜 / 지우개 모드 전환 함수
-        function setMode(mode) {
-            currentMode = mode;
-            document.getElementById('penBtn').classList.remove('active');
-            document.getElementById('eraserBtn').classList.remove('active');
-
-            if (mode === 'eraser') {
-                document.getElementById('eraserBtn').classList.add('active');
-                ctx.globalCompositeOperation = 'destination-out'; // 픽셀 영구 삭제 모드
-            } else {
-                document.getElementById('penBtn').classList.add('active');
-                ctx.globalCompositeOperation = 'source-over'; // 기본 덧칠 모드
-                ctx.strokeStyle = currentColor;
+        // 바탕 칠하기
+        function fillPattern(type, arg = '') {
+            saveState();
+            ctx.globalCompositeOperation = 'source-over';
+            if (type === 'color') {
+                ctx.fillStyle = arg;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                currentColor = arg;
+                if (currentMode === 'pen') ctx.strokeStyle = currentColor;
+            } else if (type === 'rainbow') {
+                let grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                grad.addColorStop(0, '#ff7675');
+                grad.addColorStop(0.5, '#ffeaa7');
+                grad.addColorStop(1, '#74b9ff');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            } else if (type === 'dots') {
+                ctx.fillStyle = '#fd79a8';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#ffffff';
+                for (let x = 10; x < canvas.width; x += 25) {
+                    for (let y = 10; y < canvas.height; y += 25) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
             }
         }
 
-        // 도안 변경 연동 함수
-        function loadDesign(type, element) {
-            document.querySelectorAll('.emoji-btn').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
-            
-            outlineGroup.innerHTML = complexDesigns[type];
-            clearAll();
-        }
-
-        // 화면 완전 초기화 (휴지통)
         function clearAll() {
+            saveState();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        // ⭐️ 태블릿 스타일러스 정밀 인식 Pointer Events 스크립트
+        // 👑 핵심: 터치/펜용 실시간 드래그앤드롭 구현
+        function startDrag(e, sticker) {
+            e.preventDefault();
+            draggedSticker = sticker;
+            
+            // 1. 화면에 따라다닐 유령 이모지 요소 생성
+            dragGhost = document.createElement('div');
+            dragGhost.className = 'drag-ghost';
+            dragGhost.innerText = sticker;
+            
+            // 왼쪽 메뉴의 '크기' 슬라이더 값을 반영하여 스티커 크기 결정
+            const size = parseInt(sizeInput.value) * 2;
+            dragGhost.style.fontSize = `${size}px`;
+            dragGhost.style.left = `${e.clientX}px`;
+            dragGhost.style.top = `${e.clientY}px`;
+            
+            document.body.appendChild(dragGhost);
+            
+            // 2. 글로벌 이벤트를 등록하여 스크린 전체에서 추적
+            window.addEventListener('pointermove', onDrag);
+            window.addEventListener('pointerup', onDrop);
+        }
+
+        function onDrag(e) {
+            if (!dragGhost) return;
+            // 펜/손가락 끝 좌표에 유령 이모지 밀착 이동
+            dragGhost.style.left = `${e.clientX}px`;
+            dragGhost.style.top = `${e.clientY}px`;
+        }
+
+        function onDrop(e) {
+            if (!dragGhost) return;
+            
+            // 캔버스의 화면상 절대 위치 계산
+            const rect = canvas.getBoundingClientRect();
+            
+            // 드롭한 위치가 캔버스 내부 영역인지 판별
+            if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                
+                // 캔버스 내부 상대 좌표로 치환
+                const canvasX = e.clientX - rect.left;
+                const canvasY = e.clientY - rect.top;
+                
+                saveState();
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.font = `${parseInt(sizeInput.value) * 2}px 'Malgun Gothic'`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                // 캔버스에 안착시키기
+                ctx.fillText(draggedSticker, canvasX, canvasY);
+            }
+            
+            // 유령 요소 삭제 및 이벤트 해제
+            document.body.removeChild(dragGhost);
+            dragGhost = null;
+            window.removeEventListener('pointermove', onDrag);
+            window.removeEventListener('pointerup', onDrop);
+        }
+
+        // 일반 캔버스 그리기/지우기 로직 (스티커 드래그와 완전 분리)
         canvas.addEventListener('pointerdown', (e) => {
+            saveState();
             isDrawing = true;
             ctx.beginPath();
             ctx.moveTo(e.offsetX, e.offsetY);
-            if (currentMode === 'pen') ctx.strokeStyle = currentColor;
         });
 
         canvas.addEventListener('pointermove', (e) => {
@@ -391,13 +357,6 @@
 
         canvas.addEventListener('pointerup', () => isDrawing = false);
         canvas.addEventListener('pointerleave', () => isDrawing = false);
-
-        // 팔레트 영역 외부 클릭 시 자동으로 드롭다운 닫히는 서브 로직
-        window.addEventListener('click', (e) => {
-            if (!e.target.closest('.palette-dropdown-container')) {
-                colorDrawer.classList.remove('open');
-            }
-        });
     </script>
 </body>
 </html>

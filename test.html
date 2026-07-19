@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>반짝반짝 네일아트 놀이 (드래그앤드롭)</title>
+    <title>반짝반짝 네일아트 놀이 (버그 수정판)</title>
     <style>
         body { 
             text-align: center; 
@@ -72,14 +72,12 @@
             background-color: #fff0f6;
         }
 
-        /* 드래그할 스티커 마우스 커서 및 스타일 */
         .sticker-item {
             cursor: grab;
-            touch-action: none; /* 브라우저 자체 스크롤 방지 */
+            touch-action: none;
         }
         .sticker-item:active { cursor: grabbing; }
 
-        /* ⭐️ 드래그할 때 마우스/펜 끝에 따라다닐 유령 이모지 스타일 */
         .drag-ghost {
             position: fixed;
             pointer-events: none;
@@ -101,11 +99,12 @@
         .slider-box span { font-size: 11px; font-weight: bold; color: #555; }
         .size-slider { width: 15px; height: 80px; writing-mode: vertical-lr; direction: rtl; accent-color: #e84393; cursor: pointer; }
 
+        /* 메인 판 크기 제한 및 고정 */
         .artboard {
             position: relative;
             width: 450px;
             height: 550px;
-            background: radial-gradient(circle, #ffffff, #f7d6e0);
+            background: radial-gradient(circle, #ffffff, #f7d6e0); /* 초기 기본 손톱색 */
             border-radius: 30px;
             box-shadow: 0 15px 40px rgba(0,0,0,0.1);
             overflow: hidden;
@@ -157,7 +156,7 @@
         </div>
 
         <!-- 중앙 도화지판 -->
-        <div class="artboard">
+        <div id="nailArtboard" class="artboard">
             <canvas id="paintCanvas" width="450" height="550"></canvas>
             <svg class="finger-overlay" viewBox="0 0 450 550">
                 <path d="M 0 0 H 450 V 550 H 0 Z 
@@ -165,7 +164,7 @@
             </svg>
         </div>
 
-        <!-- 오른쪽 메뉴: 매니큐어 베이스 및 드래그용 스티커 -->
+        <!-- 오른쪽 메뉴 -->
         <div class="right-menu">
             <div class="menu-column">
                 <span class="column-title">바탕색</span>
@@ -173,10 +172,9 @@
                 <button class="btn" style="background: #9b59b6;" onclick="fillPattern('color', '#9b59b6')"></button>
                 <button class="btn" style="background: linear-gradient(to right, #ff7675, #ffeaa7, #74b9ff);" onclick="fillPattern('rainbow')">🌈</button>
                 <button class="btn" style="background: radial-gradient(#fff 20%, #fd79a8 21%); background-size: 10px 10px;" onclick="fillPattern('dots')">🔮</button>
-                <button class="btn" style="background: #fff; font-size:16px; font-weight:bold;" onclick="fillPattern('color', '#ffffff')">지움</button>
+                <button class="btn" style="background: #fff; font-size:16px; font-weight:bold;" onclick="fillPattern('clear')">지움</button>
             </div>
             
-            <!-- ⭐️ 스티커 영역: onpointerdown 이벤트로 드래그 트리거 -->
             <div class="menu-column">
                 <span class="column-title">스티커</span>
                 <div class="btn sticker-item" onpointerdown="startDrag(event, '🐸')">🐸</div>
@@ -191,6 +189,7 @@
     <script>
         const canvas = document.getElementById('paintCanvas');
         const ctx = canvas.getContext('2d');
+        const artboard = document.getElementById('nailArtboard');
         const sizeInput = document.getElementById('penSize');
         
         let isDrawing = false;
@@ -200,7 +199,6 @@
         let undoStack = [];
         const maxUndo = 15;
 
-        // 드래그앤드롭 전용 변수
         let dragGhost = null;
         let draggedSticker = '';
 
@@ -208,6 +206,15 @@
         ctx.lineJoin = 'round';
         ctx.lineWidth = sizeInput.value;
         ctx.strokeStyle = currentColor;
+
+        // ⭐️ 핵심 수정 1: 화면 크기가 변해도 정확한 내부 캔버스 좌표를 구해주는 함수
+        function getCanvasCoords(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
 
         function saveState() {
             if (undoStack.length >= maxUndo) undoStack.shift();
@@ -246,33 +253,19 @@
             ctx.lineWidth = value;
         }
 
-        // 바탕 칠하기
+        // ⭐️ 핵심 수정 2: 바탕색 변경 시 캔버스를 오염시키지 않고 판(DOM)의 배경을 변경
+        // 이렇게 해야 지우개로 지워도 배경색이 파여나가지 않습니다!
         function fillPattern(type, arg = '') {
-            saveState();
-            ctx.globalCompositeOperation = 'source-over';
             if (type === 'color') {
-                ctx.fillStyle = arg;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                artboard.style.background = arg;
                 currentColor = arg;
                 if (currentMode === 'pen') ctx.strokeStyle = currentColor;
             } else if (type === 'rainbow') {
-                let grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-                grad.addColorStop(0, '#ff7675');
-                grad.addColorStop(0.5, '#ffeaa7');
-                grad.addColorStop(1, '#74b9ff');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                artboard.style.background = 'linear-gradient(to right, #ff7675, #ffeaa7, #74b9ff)';
             } else if (type === 'dots') {
-                ctx.fillStyle = '#fd79a8';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#ffffff';
-                for (let x = 10; x < canvas.width; x += 25) {
-                    for (let y = 10; y < canvas.height; y += 25) {
-                        ctx.beginPath();
-                        ctx.arc(x, y, 4, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }
+                artboard.style.background = 'radial-gradient(#fff 20%, #fd79a8 21%) 0 0 / 12px 12px';
+            } else if (type === 'clear') {
+                artboard.style.background = 'radial-gradient(circle, #ffffff, #f7d6e0)';
             }
         }
 
@@ -281,17 +274,15 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        // 👑 핵심: 터치/펜용 실시간 드래그앤드롭 구현
+        // 드래그 시작
         function startDrag(e, sticker) {
             e.preventDefault();
             draggedSticker = sticker;
             
-            // 1. 화면에 따라다닐 유령 이모지 요소 생성
             dragGhost = document.createElement('div');
             dragGhost.className = 'drag-ghost';
             dragGhost.innerText = sticker;
             
-            // 왼쪽 메뉴의 '크기' 슬라이더 값을 반영하여 스티커 크기 결정
             const size = parseInt(sizeInput.value) * 2;
             dragGhost.style.fontSize = `${size}px`;
             dragGhost.style.left = `${e.clientX}px`;
@@ -299,59 +290,56 @@
             
             document.body.appendChild(dragGhost);
             
-            // 2. 글로벌 이벤트를 등록하여 스크린 전체에서 추적
             window.addEventListener('pointermove', onDrag);
             window.addEventListener('pointerup', onDrop);
         }
 
         function onDrag(e) {
             if (!dragGhost) return;
-            // 펜/손가락 끝 좌표에 유령 이모지 밀착 이동
             dragGhost.style.left = `${e.clientX}px`;
             dragGhost.style.top = `${e.clientY}px`;
         }
 
+        // 스티커 놓기 (정밀 보정 적용)
         function onDrop(e) {
             if (!dragGhost) return;
             
-            // 캔버스의 화면상 절대 위치 계산
             const rect = canvas.getBoundingClientRect();
             
-            // 드롭한 위치가 캔버스 내부 영역인지 판별
+            // 드롭 위치 체크
             if (e.clientX >= rect.left && e.clientX <= rect.right &&
                 e.clientY >= rect.top && e.clientY <= rect.bottom) {
                 
-                // 캔버스 내부 상대 좌표로 치환
-                const canvasX = e.clientX - rect.left;
-                const canvasY = e.clientY - rect.top;
+                // ⭐️ 보정된 캔버스 내부 좌표 획득
+                const coords = getCanvasCoords(e.clientX, e.clientY);
                 
                 saveState();
                 ctx.globalCompositeOperation = 'source-over';
                 ctx.font = `${parseInt(sizeInput.value) * 2}px 'Malgun Gothic'`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                // 캔버스에 안착시키기
-                ctx.fillText(draggedSticker, canvasX, canvasY);
+                ctx.fillText(draggedSticker, coords.x, coords.y);
             }
             
-            // 유령 요소 삭제 및 이벤트 해제
             document.body.removeChild(dragGhost);
             dragGhost = null;
             window.removeEventListener('pointermove', onDrag);
             window.removeEventListener('pointerup', onDrop);
         }
 
-        // 일반 캔버스 그리기/지우기 로직 (스티커 드래그와 완전 분리)
+        // ⭐️ 그리기 좌표도 정밀 보정본으로 일괄 수정
         canvas.addEventListener('pointerdown', (e) => {
             saveState();
             isDrawing = true;
             ctx.beginPath();
-            ctx.moveTo(e.offsetX, e.offsetY);
+            const coords = getCanvasCoords(e.clientX, e.clientY);
+            ctx.moveTo(coords.x, coords.y);
         });
 
         canvas.addEventListener('pointermove', (e) => {
             if (!isDrawing) return;
-            ctx.lineTo(e.offsetX, e.offsetY);
+            const coords = getCanvasCoords(e.clientX, e.clientY);
+            ctx.lineTo(coords.x, coords.y);
             ctx.stroke();
         });
 

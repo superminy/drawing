@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>반짝반짝 리얼 네일아트 놀이</title>
     <style>
-        /* 기본 박스 모델 초기화로 여백 버그 방지 */
         * { box-sizing: border-box; }
 
         body { 
@@ -13,7 +12,7 @@
             font-family: 'Malgun Gothic', sans-serif; 
             background: linear-gradient(135deg, #ffeaa7, #ffc0cb); 
             margin: 0; 
-            padding: 10px; 
+            padding: 8px; 
             touch-action: none; 
             user-select: none;
             min-height: 100vh;
@@ -23,9 +22,8 @@
             justify-content: center;
         }
 
-        h2 { margin: 5px 0 12px 0; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.15); font-size: 24px; }
+        h2 { margin: 5px 0 10px 0; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.15); font-size: 24px; }
 
-        /* 메인 컨테이너 (PC에선 가로, 모바일에선 세로) */
         .game-container {
             display: flex;
             align-items: center;
@@ -44,36 +42,53 @@
 
         .right-menu {
             display: flex;
-            gap: 15px;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 18px;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 16px;
             border-radius: 25px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            width: 280px;
             flex-shrink: 0;
         }
         .menu-column {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
+            width: 100%;
         }
         .column-title { font-size: 13px; font-weight: bold; color: #555; margin-bottom: 2px; text-align: left; }
 
-        /* 스티커 배치 그리드 공간 */
-        .sticker-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            max-height: 360px;
-            overflow-y: auto;
-            padding-right: 4px;
+        /* 👑 좌우로 부드럽게 스크롤되는 스티커 슬라이더 바 */
+        .sticker-slider-container {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
         }
-        .sticker-grid::-webkit-scrollbar { width: 6px; }
-        .sticker-grid::-webkit-scrollbar-thumb { background: #ffb6c1; border-radius: 10px; }
+        .sticker-slider {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding: 5px 2px;
+            touch-action: pan-x; /* 슬라이더 영역 내에서 좌우 스와이프 허용 */
+        }
+        /* 스크롤바 디자인 (부드럽고 투명하게 무드 유지) */
+        .sticker-slider::-webkit-scrollbar { height: 5px; }
+        .sticker-slider::-webkit-scrollbar-thumb { background: rgba(232, 67, 147, 0.3); border-radius: 10px; }
 
-        /* 공통 버튼 스타일 */
+        .color-row {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        /* 버튼 스타일 기본 정의 */
         .btn {
-            width: 58px;
-            height: 58px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             border: 3px solid white;
             background-color: white;
@@ -84,6 +99,7 @@
             align-items: center;
             justify-content: center;
             transition: all 0.15s ease;
+            flex-shrink: 0;
         }
         .btn.active {
             border-color: #e84393;
@@ -91,7 +107,10 @@
             background-color: #fff0f6;
         }
 
-        .sticker-item { cursor: grab; touch-action: none; }
+        .sticker-item { 
+            scroll-snap-align: start;
+            cursor: grab;
+        }
         .sticker-item:active { cursor: grabbing; }
 
         .drag-ghost {
@@ -102,7 +121,6 @@
             user-select: none;
         }
 
-        /* 크기 조절 슬라이더 박스 */
         .slider-box {
             background: white;
             padding: 8px;
@@ -116,7 +134,7 @@
         .slider-box span { font-size: 11px; font-weight: bold; color: #555; }
         .size-slider { width: 15px; height: 90px; writing-mode: vertical-lr; direction: rtl; accent-color: #e84393; cursor: pointer; }
 
-        /* 👑 중앙 도화지 판 (기본 PC 사이즈) */
+        /* 중앙 도화지 판 */
         .artboard {
             position: relative;
             width: 450px;
@@ -125,9 +143,21 @@
             box-shadow: 0 15px 40px rgba(0,0,0,0.15);
             overflow: hidden;
             flex-shrink: 0; 
-            background-color: #f3edf5;
         }
         
+        /* 👑 획기적 변경: 버그 차단용 독립식 하단 배경 레이어 */
+        #nailBackground {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #ffffff, #f7d6e0);
+            transition: background 0.25s ease;
+        }
+        
+        /* 그림을 그리는 캔버스는 투명하게 고정 */
         #paintCanvas {
             position: absolute;
             top: 0;
@@ -135,8 +165,7 @@
             z-index: 1;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle, #ffffff, #f7d6e0);
-            transition: background 0.25s ease;
+            background: transparent;
         }
         
         .finger-overlay {
@@ -150,20 +179,20 @@
         }
 
         /* ========================================================
-           📱 👑 핵심: 핸드폰 세로 화면(최대 768px 이하) 전용 반응형 레이아웃
+           📱 핸드폰 세로화면(Portrait) 완벽 레이아웃 대응 변환
            ======================================================== */
         @media (max-width: 768px) {
-            body { justify-content: flex-start; padding: 5px; }
-            h2 { font-size: 20px; margin: 4px 0 8px 0; }
+            body { justify-content: flex-start; padding: 4px; }
+            h2 { font-size: 18px; margin: 2px 0 6px 0; }
 
             .game-container { 
                 flex-direction: column; 
-                gap: 10px; 
+                gap: 8px; 
                 width: 100%;
-                max-width: 370px; /* 일반적인 스마트폰 가로 폭에 맞춤 */
+                max-width: 360px;
             }
 
-            /* [상단 메뉴] 가로로 나란히 배치 */
+            /* [상단 메뉴] 콤팩트 가로 정렬 */
             .left-menu { 
                 flex-direction: row; 
                 width: 100%; 
@@ -171,73 +200,56 @@
                 align-items: center;
                 gap: 4px;
             }
-            .left-menu .btn { width: 46px; height: 46px; font-size: 20px; }
+            .left-menu .btn { width: 44px; height: 44px; font-size: 18px; }
             
-            .slider-box { flex-direction: row; height: 46px; padding: 0 12px; border-radius: 23px; gap: 6px; }
-            .size-slider { writing-mode: horizontal-tb; width: 75px; height: 12px; direction: ltr; }
+            .slider-box { flex-direction: row; height: 44px; padding: 0 10px; border-radius: 22px; gap: 4px; }
+            .size-slider { writing-mode: horizontal-tb; width: 70px; height: 10px; direction: ltr; }
 
-            /* [중앙 도화지] 폰 가로 너비에 맞춰 100% 자동 축소 (비율 유지) */
+            /* [중앙 도화지] 화면 가로폭에 맞춰 자동 가변 스케일링 */
             .artboard {
                 width: 100%;
-                max-width: 350px;
                 height: auto;
-                aspect-ratio: 450 / 550; /* 가로세로 완벽 고정 */
-                border-radius: 24px;
+                aspect-ratio: 450 / 550;
+                border-radius: 22px;
             }
 
-            /* [하단 메뉴] 위아래로 쌓이도록 배치 */
+            /* [하단 메뉴] 가로 슬라이더 형태로 가볍게 가변 배치 */
             .right-menu { 
                 flex-direction: column; 
                 width: 100%; 
-                padding: 12px;
+                padding: 10px;
                 border-radius: 20px;
-                gap: 12px;
+                gap: 8px;
             }
             
-            /* 바탕색 선택 칩들을 가로로 한 줄 정렬 */
-            .right-menu .menu-column:first-child {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .right-menu .menu-column:first-child div {
-                display: flex;
-                flex-direction: row;
-                gap: 6px;
-                width: 100%;
-            }
-            .right-menu .menu-column:first-child .btn { width: 44px; height: 44px; font-size: 14px; }
-
-            /* 스티커 목록을 가로 6열 그리드로 조밀하게 변경 */
-            .sticker-grid { 
-                grid-template-columns: repeat(6, 1fr); 
-                max-height: none; 
-                gap: 6px;
-                width: 100%;
-            }
-            .sticker-grid .btn { width: 44px; height: 44px; font-size: 20px; border-width: 2px; }
+            .right-menu .btn { width: 46px; height: 46px; font-size: 20px; border-width: 2px; }
+            .right-menu .menu-column:first-child .btn { font-size: 12px; }
         }
     </style>
 </head>
 <body>
 
-    <h2>💅 반짝반짝 네일아트 놀이</h2>
+    <h2>💅 반짝반짝 모바일 네일 숍</h2>
 
     <div class="game-container">
-        <!-- 상단/좌측 제어 메뉴 -->
+        <!-- 상단 기능 툴바 -->
         <div class="left-menu">
-            <button class="btn" style="background-color: #ff7675; color: white; font-size: 18px;" onclick="undo()">↩️</button>
+            <button class="btn" style="background-color: #ff7675; color: white; font-size: 16px;" onclick="undo()">↩️</button>
             <button class="btn" style="background-color: #ffeaa7;" onclick="clearAll()">🗑️</button>
             <button id="tool-pen" class="btn active" onclick="setMode('pen')">✏️</button>
             <button id="tool-eraser" class="btn" onclick="setMode('eraser')">🧼</button>
             
             <div class="slider-box">
                 <span>크기</span>
-                <input type="range" id="penSize" class="size-slider" min="15" max="60" value="32" oninput="updateSize(this.value)">
+                <input type="range" id="penSize" class="size-slider" min="15" max="60" value="30" oninput="updateSize(this.value)">
             </div>
         </div>
 
-        <!-- 중앙 도화지판 (모바일 화면 대응 자동 축소) -->
+        <!-- 중앙 손톱 캔버스 아틀리에 -->
         <div class="artboard">
+            <!-- 무조건 바뀌는 진짜 배경판 -->
+            <div id="nailBackground"></div>
+            <!-- 그림판 -->
             <canvas id="paintCanvas" width="450" height="550"></canvas>
             
             <svg class="finger-overlay" viewBox="0 0 450 550">
@@ -257,36 +269,39 @@
             </svg>
         </div>
 
-        <!-- 하단/우측 꾸미기 메뉴 -->
+        <!-- 하단 꾸미기 바 -->
         <div class="right-menu">
             <div class="menu-column">
-                <span class="column-title">바탕색</span>
-                <div>
+                <span class="column-title">바탕 매니큐어 색상</span>
+                <div class="color-row">
                     <button class="btn" style="background: #e84393;" onclick="fillPattern('color', '#e84393')"></button>
                     <button class="btn" style="background: #9b59b6;" onclick="fillPattern('color', '#9b59b6')"></button>
                     <button class="btn" style="background: linear-gradient(to bottom, #ff7675, #ffeaa7, #74b9ff);" onclick="fillPattern('rainbow')">🌈</button>
                     <button class="btn" style="background: radial-gradient(#fff 20%, #fd79a8 21%) 0 0 / 14px 14px;" onclick="fillPattern('dots')">🔮</button>
-                    <button class="btn" style="background: #fff; font-size:13px; font-weight:bold;" onclick="fillPattern('clear')">지움</button>
+                    <button class="btn" style="background: #fff; font-weight:bold;" onclick="fillPattern('clear')">지움</button>
                 </div>
             </div>
             
             <div class="menu-column">
-                <span class="column-title">스티커 (총 14종)</span>
-                <div class="sticker-grid">
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '💖')">💖</div>
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '⭐')">⭐</div>
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🎀')">🎀</div>
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '💎')">💎</div>
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '👑')">👑</div>
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🦄')">🦄</div>
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🍒')">🍒</div>
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🐰')">🐰</div>
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🐼')">🐼</div>
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🐱')">🐱</div>
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🦁')">🦁</div>
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🐸')">🐸</div>
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🧁')">🧁</div>
-                    <div class="btn sticker-item" onpointerdown="startDrag(event, '🌼')">🌼</div>
+                <span class="column-title">데코 스티커 (옆으로 밀어보세요 👉)</span>
+                <div class="sticker-slider-container">
+                    <!-- 👑 좌우 스와이프가 지원되는 슬라이더 목록 -->
+                    <div class="sticker-slider">
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '💖')">💖</div>
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '⭐')">⭐</div>
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '🎀')">🎀</div>
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '💎')">💎</div>
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '👑')">👑</div>
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '🦄')">🦄</div>
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '🍒')">🍒</div>
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '🐰')">🐰</div>
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '🐼')">🐼</div>
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '🐱')">🐱</div>
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '🦁')">🦁</div>
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '🐸')">🐸</div>
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '🧁')">🧁</div>
+                        <div class="btn sticker-item" onpointerdown="startDrag(event, '🌼')">🌼</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -296,6 +311,7 @@
         const canvas = document.getElementById('paintCanvas');
         const ctx = canvas.getContext('2d');
         const sizeInput = document.getElementById('penSize');
+        const nailBg = document.getElementById('nailBackground');
         
         let isDrawing = false;
         let currentMode = 'pen'; 
@@ -312,7 +328,6 @@
         ctx.lineWidth = sizeInput.value;
         ctx.strokeStyle = currentColor;
 
-        // 👑 어떤 해상도에서도 터치 좌표를 450x550 표준 해상도로 정밀 환산해주는 함수
         function getCanvasCoords(clientX, clientY) {
             const rect = canvas.getBoundingClientRect();
             return {
@@ -358,17 +373,18 @@
             ctx.lineWidth = value;
         }
 
+        /* 👑 독립 배경 레이어 스타일 제어로 모바일 브라우저 버그 전면 차단 */
         function fillPattern(type, arg = '') {
             if (type === 'color') {
-                canvas.style.background = arg;
+                nailBg.style.background = arg;
                 currentColor = arg;
                 if (currentMode === 'pen') ctx.strokeStyle = currentColor;
             } else if (type === 'rainbow') {
-                canvas.style.background = 'linear-gradient(to bottom, #ff7675, #ffeaa7, #74b9ff)';
+                nailBg.style.background = 'linear-gradient(to bottom, #ff7675, #ffeaa7, #74b9ff)';
             } else if (type === 'dots') {
-                canvas.style.background = 'radial-gradient(#fff 20%, #fd79a8 21%) 0 0 / 14px 14px';
+                nailBg.style.background = 'radial-gradient(#fff 20%, #fd79a8 21%) 0 0 / 12px 12px';
             } else if (type === 'clear') {
-                canvas.style.background = 'radial-gradient(circle, #ffffff, #f7d6e0)';
+                nailBg.style.background = 'radial-gradient(circle, #ffffff, #f7d6e0)';
             }
         }
 
@@ -377,9 +393,9 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        // 스티커 드래그 핸들러 (마우스/터치 통합)
+        // 포인터 드래그 제어
         function startDrag(e, sticker) {
-            e.preventDefault();
+            // 슬라이더 바 자체 스크롤 터치와 겹치지 않게 드래그 이탈을 계산
             draggedSticker = sticker;
             
             dragGhost = document.createElement('div');
@@ -408,7 +424,6 @@
             
             const rect = canvas.getBoundingClientRect();
             
-            // 캔버스 영역 내에 드롭되었는지 체크
             if (e.clientX >= rect.left && e.clientX <= rect.right &&
                 e.clientY >= rect.top && e.clientY <= rect.bottom) {
                 
@@ -416,7 +431,6 @@
                 
                 saveState();
                 ctx.globalCompositeOperation = 'source-over';
-                
                 ctx.font = `${parseInt(sizeInput.value) * 0.75}px 'Malgun Gothic'`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -429,7 +443,7 @@
             window.removeEventListener('pointerup', onDrop);
         }
 
-        // 그리기 등록
+        // 그리기 영역 이벤트
         canvas.addEventListener('pointerdown', (e) => {
             saveState();
             isDrawing = true;

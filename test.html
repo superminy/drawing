@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>반짝반짝 왕손톱 네일아트 놀이</title>
+    <title>반짝반짝 리얼 네일아트 놀이</title>
     <style>
         body { 
             text-align: center; 
@@ -22,7 +22,6 @@
 
         h2 { margin: 5px 0 15px 0; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.15); font-size: 28px; }
 
-        /* 메인 게임 레이아웃: 화면이 찌그러지지 않게 방어 */
         .game-container {
             display: flex;
             align-items: center;
@@ -81,7 +80,6 @@
         }
         .sticker-item:active { cursor: grabbing; }
 
-        /* 화면을 따라다니는 스티커 유령 */
         .drag-ghost {
             position: fixed;
             pointer-events: none;
@@ -103,18 +101,18 @@
         .slider-box span { font-size: 11px; font-weight: bold; color: #555; }
         .size-slider { width: 15px; height: 90px; writing-mode: vertical-lr; direction: rtl; accent-color: #e84393; cursor: pointer; }
 
-        /* 👑 중앙 도화지판: 절대 찌그러지지 않도록 크기 고정(flex-shrink: 0) */
+        /* 중앙 아틀리에 판 */
         .artboard {
             position: relative;
             width: 450px;
             height: 550px;
-            background: radial-gradient(circle, #ffffff, #f7d6e0);
             border-radius: 30px;
             box-shadow: 0 15px 40px rgba(0,0,0,0.1);
             overflow: hidden;
             flex-shrink: 0; 
         }
         
+        /* 👑 핵심 변경: 캔버스 자체를 손톱 모양 곡선으로 클리핑 & 기본 매니큐어 색상 지정 */
         #paintCanvas {
             position: absolute;
             top: 0;
@@ -122,8 +120,12 @@
             z-index: 1;
             width: 100%;
             height: 100%;
+            clip-path: path('M 150 140 C 150 100, 300 100, 300 140 L 285 380 C 285 410, 165 410, 165 380 Z');
+            background: radial-gradient(circle, #ffffff, #f7d6e0);
+            transition: background 0.2s ease;
         }
         
+        /* 손가락 레이어 오버레이 */
         .finger-overlay {
             position: absolute;
             top: 0;
@@ -133,14 +135,7 @@
             height: 100%;
             pointer-events: none;
         }
-        .finger-overlay path {
-            fill: #fbc5b1;
-            fill-rule: evenodd;
-            stroke: #e09985;
-            stroke-width: 3;
-        }
 
-        /* 📱 태블릿 세로 모드나 작은 화면을 위한 찌그러짐 방지 반응형 레이아웃 */
         @media (max-width: 768px) {
             body { justify-content: flex-start; overflow-y: auto; }
             .game-container { flex-direction: column; gap: 15px; }
@@ -153,7 +148,7 @@
 </head>
 <body>
 
-    <h2>💅 반짝반짝 왕손톱 꾸미기 놀이</h2>
+    <h2>💅 리얼 손가락 손톱 꾸미기 놀이</h2>
 
     <div class="game-container">
         <!-- 왼쪽 메뉴 -->
@@ -165,18 +160,29 @@
             
             <div class="slider-box">
                 <span>크기</span>
-                <input type="range" id="penSize" class="size-slider" min="10" max="80" value="30" oninput="updateSize(this.value)">
+                <input type="range" id="penSize" class="size-slider" min="15" max="60" value="30" oninput="updateSize(this.value)">
             </div>
         </div>
 
         <!-- 중앙 도화지판 -->
-        <div id="nailArtboard" class="artboard">
+        <div class="artboard">
+            <!-- 그림이 그려질 손톱 캔버스 -->
             <canvas id="paintCanvas" width="450" height="550"></canvas>
             
-            <!-- 👑 대폭 확대된 손톱 모양 마스크 SVG -->
+            <!-- 👑 진짜 손가락 실루엣과 관절 주름을 표현한 SVG 오버레이 -->
             <svg class="finger-overlay" viewBox="0 0 450 550">
+                <!-- 네일숍 테이블 배경색 -->
+                <rect width="450" height="550" fill="#f5f0f6" />
+                
+                <!-- 예쁜 피부톤의 손가락 입체 모양 (손톱 부위만 구멍 뚫기 적용) -->
                 <path d="M 0 0 H 450 V 550 H 0 Z 
-                         M 75 100 C 75 35, 375 35, 375 100 V 470 C 375 510, 75 510, 75 470 Z" />
+                         M 90 550 L 110 120 C 110 30, 340 30, 340 120 L 360 550 Z" 
+                      fill="#fbc5b1" fill-rule: evenodd stroke="#e09985" stroke-width="2"/>
+                
+                <!-- 손가락 디테일 묘사 (손톱 밑 큐티클 선 및 마디 주름) -->
+                <path d="M 162 385 C 162 412, 288 412, 288 385" fill="none" stroke="#d18671" stroke-width="3" stroke-linecap="round" />
+                <path d="M 115 480 C 165 490, 285 490, 335 480" fill="none" stroke="#e09985" stroke-width="2.5" stroke-linecap="round" />
+                <path d="M 120 492 C 170 502, 280 502, 330 492" fill="none" stroke="#e09985" stroke-width="2" stroke-linecap="round" />
             </svg>
         </div>
 
@@ -205,7 +211,6 @@
     <script>
         const canvas = document.getElementById('paintCanvas');
         const ctx = canvas.getContext('2d');
-        const artboard = document.getElementById('nailArtboard');
         const sizeInput = document.getElementById('penSize');
         
         let isDrawing = false;
@@ -223,7 +228,6 @@
         ctx.lineWidth = sizeInput.value;
         ctx.strokeStyle = currentColor;
 
-        // 화면 크기가 줄어들어도 왜곡 없이 1:1 정밀 좌표를 뽑아내는 함수
         function getCanvasCoords(clientX, clientY) {
             const rect = canvas.getBoundingClientRect();
             return {
@@ -261,7 +265,7 @@
             } else if (mode === 'eraser') {
                 document.getElementById('tool-eraser').classList.add('active');
                 ctx.globalCompositeOperation = 'destination-out';
-                ctx.lineWidth = Math.max(parseInt(sizeInput.value), 35);
+                ctx.lineWidth = Math.max(parseInt(sizeInput.value), 25);
             }
         }
 
@@ -269,17 +273,18 @@
             ctx.lineWidth = value;
         }
 
+        // 👑 핵심 변경 2: 캔버스 배경 스타일을 직접 조작하여 지우개 버그 차단
         function fillPattern(type, arg = '') {
             if (type === 'color') {
-                artboard.style.background = arg;
+                canvas.style.background = arg;
                 currentColor = arg;
                 if (currentMode === 'pen') ctx.strokeStyle = currentColor;
             } else if (type === 'rainbow') {
-                artboard.style.background = 'linear-gradient(to right, #ff7675, #ffeaa7, #74b9ff)';
+                canvas.style.background = 'linear-gradient(to bottom, #ff7675, #ffeaa7, #74b9ff)';
             } else if (type === 'dots') {
-                artboard.style.background = 'radial-gradient(#fff 20%, #fd79a8 21%) 0 0 / 14px 14px';
+                canvas.style.background = 'radial-gradient(#fff 20%, #fd79a8 21%) 0 0 / 14px 14px';
             } else if (type === 'clear') {
-                artboard.style.background = 'radial-gradient(circle, #ffffff, #f7d6e0)';
+                canvas.style.background = 'radial-gradient(circle, #ffffff, #f7d6e0)';
             }
         }
 
@@ -297,8 +302,8 @@
             dragGhost.className = 'drag-ghost';
             dragGhost.innerText = sticker;
             
-            // 끌고 갈 때 눈에 보이는 크기도 슬라이더 반영
-            const size = parseInt(sizeInput.value) * 1.8;
+            // 👑 크기 배율 감소 (1.8 -> 1.1)로 귀여운 미니 크기 연출
+            const size = parseInt(sizeInput.value) * 1.1;
             dragGhost.style.fontSize = `${size}px`;
             dragGhost.style.left = `${e.clientX}px`;
             dragGhost.style.top = `${e.clientY}px`;
@@ -315,7 +320,7 @@
             dragGhost.style.top = `${e.clientY}px`;
         }
 
-        // 스티커 안착
+        // 드롭
         function onDrop(e) {
             if (!dragGhost) return;
             
@@ -329,8 +334,8 @@
                 saveState();
                 ctx.globalCompositeOperation = 'source-over';
                 
-                // 캔버스에 그려질 때도 비율 왜곡 없이 완벽한 크기로 묘사
-                ctx.font = `${parseInt(sizeInput.value) * 1.8}px 'Malgun Gothic'`;
+                // 안착 스티커 크기도 축소 적용
+                ctx.font = `${parseInt(sizeInput.value) * 1.1}px 'Malgun Gothic'`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(draggedSticker, coords.x, coords.y);
@@ -342,7 +347,7 @@
             window.removeEventListener('pointerup', onDrop);
         }
 
-        // 드로잉 좌표 보정
+        // 그리기
         canvas.addEventListener('pointerdown', (e) => {
             saveState();
             isDrawing = true;

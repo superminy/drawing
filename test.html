@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>반짝반짝 네일아트 놀이 (버그 수정판)</title>
+    <title>반짝반짝 왕손톱 네일아트 놀이</title>
     <style>
         body { 
             text-align: center; 
@@ -13,21 +13,22 @@
             padding: 10px; 
             touch-action: none; 
             user-select: none;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
         }
 
-        h2 { margin: 0 0 10px 0; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.15); font-size: 26px; }
+        h2 { margin: 5px 0 15px 0; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.15); font-size: 28px; }
 
+        /* 메인 게임 레이아웃: 화면이 찌그러지지 않게 방어 */
         .game-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
-            max-width: 900px;
+            gap: 20px;
+            max-width: 1000px;
             width: 100%;
         }
 
@@ -35,6 +36,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            flex-shrink: 0;
         }
 
         .right-menu {
@@ -44,22 +46,23 @@
             padding: 15px;
             border-radius: 25px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            flex-shrink: 0;
         }
         .menu-column {
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
-        .column-title { font-size: 12px; font-weight: bold; color: #666; margin-bottom: 2px; }
+        .column-title { font-size: 13px; font-weight: bold; color: #666; margin-bottom: 2px; }
 
         .btn {
-            width: 55px;
-            height: 55px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             border: 3px solid white;
             background-color: white;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            font-size: 24px;
+            font-size: 26px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -78,6 +81,7 @@
         }
         .sticker-item:active { cursor: grabbing; }
 
+        /* 화면을 따라다니는 스티커 유령 */
         .drag-ghost {
             position: fixed;
             pointer-events: none;
@@ -97,17 +101,18 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
         .slider-box span { font-size: 11px; font-weight: bold; color: #555; }
-        .size-slider { width: 15px; height: 80px; writing-mode: vertical-lr; direction: rtl; accent-color: #e84393; cursor: pointer; }
+        .size-slider { width: 15px; height: 90px; writing-mode: vertical-lr; direction: rtl; accent-color: #e84393; cursor: pointer; }
 
-        /* 메인 판 크기 제한 및 고정 */
+        /* 👑 중앙 도화지판: 절대 찌그러지지 않도록 크기 고정(flex-shrink: 0) */
         .artboard {
             position: relative;
             width: 450px;
             height: 550px;
-            background: radial-gradient(circle, #ffffff, #f7d6e0); /* 초기 기본 손톱색 */
+            background: radial-gradient(circle, #ffffff, #f7d6e0);
             border-radius: 30px;
             box-shadow: 0 15px 40px rgba(0,0,0,0.1);
             overflow: hidden;
+            flex-shrink: 0; 
         }
         
         #paintCanvas {
@@ -134,33 +139,44 @@
             stroke: #e09985;
             stroke-width: 3;
         }
+
+        /* 📱 태블릿 세로 모드나 작은 화면을 위한 찌그러짐 방지 반응형 레이아웃 */
+        @media (max-width: 768px) {
+            body { justify-content: flex-start; overflow-y: auto; }
+            .game-container { flex-direction: column; gap: 15px; }
+            .left-menu { flex-direction: row; width: 450px; justify-content: space-between; }
+            .slider-box { flex-direction: row; height: 44px; padding: 0 15px; border-radius: 25px; }
+            .size-slider { writing-mode: horizontal-tb; width: 80px; height: 15px; }
+            .right-menu { flex-direction: row; width: 420px; justify-content: space-around; }
+        }
     </style>
 </head>
 <body>
 
-    <h2>💅 끌어다 붙이는 반짝반짝 네일아트</h2>
+    <h2>💅 반짝반짝 왕손톱 꾸미기 놀이</h2>
 
     <div class="game-container">
         <!-- 왼쪽 메뉴 -->
         <div class="left-menu">
             <button class="btn" style="background-color: #ff7675; color: white; font-size: 18px;" onclick="undo()">↩️</button>
             <button class="btn" style="background-color: #ffeaa7;" onclick="clearAll()">🗑️</button>
-            <hr style="width:80%; border:1px solid #ccc; margin: 5px 0;">
             <button id="tool-pen" class="btn active" onclick="setMode('pen')">✏️</button>
             <button id="tool-eraser" class="btn" onclick="setMode('eraser')">🧼</button>
             
             <div class="slider-box">
                 <span>크기</span>
-                <input type="range" id="penSize" class="size-slider" min="5" max="60" value="20" oninput="updateSize(this.value)">
+                <input type="range" id="penSize" class="size-slider" min="10" max="80" value="30" oninput="updateSize(this.value)">
             </div>
         </div>
 
         <!-- 중앙 도화지판 -->
         <div id="nailArtboard" class="artboard">
             <canvas id="paintCanvas" width="450" height="550"></canvas>
+            
+            <!-- 👑 대폭 확대된 손톱 모양 마스크 SVG -->
             <svg class="finger-overlay" viewBox="0 0 450 550">
                 <path d="M 0 0 H 450 V 550 H 0 Z 
-                         M 160 180 C 160 140, 290 140, 290 180 V 440 C 290 460, 160 460, 160 440 Z" />
+                         M 75 100 C 75 35, 375 35, 375 100 V 470 C 375 510, 75 510, 75 470 Z" />
             </svg>
         </div>
 
@@ -171,8 +187,8 @@
                 <button class="btn" style="background: #e84393;" onclick="fillPattern('color', '#e84393')"></button>
                 <button class="btn" style="background: #9b59b6;" onclick="fillPattern('color', '#9b59b6')"></button>
                 <button class="btn" style="background: linear-gradient(to right, #ff7675, #ffeaa7, #74b9ff);" onclick="fillPattern('rainbow')">🌈</button>
-                <button class="btn" style="background: radial-gradient(#fff 20%, #fd79a8 21%); background-size: 10px 10px;" onclick="fillPattern('dots')">🔮</button>
-                <button class="btn" style="background: #fff; font-size:16px; font-weight:bold;" onclick="fillPattern('clear')">지움</button>
+                <button class="btn" style="background: radial-gradient(#fff 20%, #fd79a8 21%) 0 0 / 14px 14px;" onclick="fillPattern('dots')">🔮</button>
+                <button class="btn" style="background: #fff; font-size:15px; font-weight:bold;" onclick="fillPattern('clear')">지움</button>
             </div>
             
             <div class="menu-column">
@@ -207,7 +223,7 @@
         ctx.lineWidth = sizeInput.value;
         ctx.strokeStyle = currentColor;
 
-        // ⭐️ 핵심 수정 1: 화면 크기가 변해도 정확한 내부 캔버스 좌표를 구해주는 함수
+        // 화면 크기가 줄어들어도 왜곡 없이 1:1 정밀 좌표를 뽑아내는 함수
         function getCanvasCoords(clientX, clientY) {
             const rect = canvas.getBoundingClientRect();
             return {
@@ -245,7 +261,7 @@
             } else if (mode === 'eraser') {
                 document.getElementById('tool-eraser').classList.add('active');
                 ctx.globalCompositeOperation = 'destination-out';
-                ctx.lineWidth = Math.max(parseInt(sizeInput.value), 25);
+                ctx.lineWidth = Math.max(parseInt(sizeInput.value), 35);
             }
         }
 
@@ -253,8 +269,6 @@
             ctx.lineWidth = value;
         }
 
-        // ⭐️ 핵심 수정 2: 바탕색 변경 시 캔버스를 오염시키지 않고 판(DOM)의 배경을 변경
-        // 이렇게 해야 지우개로 지워도 배경색이 파여나가지 않습니다!
         function fillPattern(type, arg = '') {
             if (type === 'color') {
                 artboard.style.background = arg;
@@ -263,7 +277,7 @@
             } else if (type === 'rainbow') {
                 artboard.style.background = 'linear-gradient(to right, #ff7675, #ffeaa7, #74b9ff)';
             } else if (type === 'dots') {
-                artboard.style.background = 'radial-gradient(#fff 20%, #fd79a8 21%) 0 0 / 12px 12px';
+                artboard.style.background = 'radial-gradient(#fff 20%, #fd79a8 21%) 0 0 / 14px 14px';
             } else if (type === 'clear') {
                 artboard.style.background = 'radial-gradient(circle, #ffffff, #f7d6e0)';
             }
@@ -283,7 +297,8 @@
             dragGhost.className = 'drag-ghost';
             dragGhost.innerText = sticker;
             
-            const size = parseInt(sizeInput.value) * 2;
+            // 끌고 갈 때 눈에 보이는 크기도 슬라이더 반영
+            const size = parseInt(sizeInput.value) * 1.8;
             dragGhost.style.fontSize = `${size}px`;
             dragGhost.style.left = `${e.clientX}px`;
             dragGhost.style.top = `${e.clientY}px`;
@@ -300,22 +315,22 @@
             dragGhost.style.top = `${e.clientY}px`;
         }
 
-        // 스티커 놓기 (정밀 보정 적용)
+        // 스티커 안착
         function onDrop(e) {
             if (!dragGhost) return;
             
             const rect = canvas.getBoundingClientRect();
             
-            // 드롭 위치 체크
             if (e.clientX >= rect.left && e.clientX <= rect.right &&
                 e.clientY >= rect.top && e.clientY <= rect.bottom) {
                 
-                // ⭐️ 보정된 캔버스 내부 좌표 획득
                 const coords = getCanvasCoords(e.clientX, e.clientY);
                 
                 saveState();
                 ctx.globalCompositeOperation = 'source-over';
-                ctx.font = `${parseInt(sizeInput.value) * 2}px 'Malgun Gothic'`;
+                
+                // 캔버스에 그려질 때도 비율 왜곡 없이 완벽한 크기로 묘사
+                ctx.font = `${parseInt(sizeInput.value) * 1.8}px 'Malgun Gothic'`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(draggedSticker, coords.x, coords.y);
@@ -327,7 +342,7 @@
             window.removeEventListener('pointerup', onDrop);
         }
 
-        // ⭐️ 그리기 좌표도 정밀 보정본으로 일괄 수정
+        // 드로잉 좌표 보정
         canvas.addEventListener('pointerdown', (e) => {
             saveState();
             isDrawing = true;
